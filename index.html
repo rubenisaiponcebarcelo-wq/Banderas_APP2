@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Banderas del Mundo</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#080810">
+  <meta name="color-scheme" content="dark">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Banderas">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#080810;--card:#111120;--border:rgba(255,255,255,.07);
+  --text:#ede8df;--muted:#9e9890;--dim:#3a3530;
+  --gold:#c9a84c;--gold-dim:rgba(201,168,76,.15);
+  --green:#7dd4a0;--green-dim:rgba(74,160,100,.15);
+  --red:#e08080;--red-dim:rgba(210,80,80,.12);
+}
+html{height:100%;color-scheme:dark;}body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden;-webkit-tap-highlight-color:transparent;}
+body{display:flex;flex-direction:column;align-items:center;padding:1.2rem 1rem 3rem;min-height:100vh;position:relative;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(180,140,60,.08) 0%,transparent 70%),radial-gradient(ellipse 40% 30% at 80% 80%,rgba(60,80,180,.05) 0%,transparent 60%);pointer-events:none;z-index:0;}
+#app{position:relative;z-index:1;width:100%;max-width:520px;}
+
+/* Header */
+.title{font-family:'Cormorant Garamond',serif;font-size:1.85rem;font-weight:600;letter-spacing:.03em;line-height:1;text-align:center;margin-bottom:1rem;}
+.title em{color:var(--gold);font-style:italic;}
+
+/* Mode toggle */
+.mode-toggle{display:flex;gap:.4rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:999px;padding:.25rem;margin-bottom:.9rem;}
+.mode-btn{flex:1;padding:.35rem .45rem;border:none;border-radius:999px;font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;cursor:pointer;transition:all .2s;background:transparent;color:#3a3530;letter-spacing:.04em;}
+.mode-btn.active{background:rgba(201,168,76,.18);border:1px solid rgba(201,168,76,.4);color:var(--gold);}
+.mode-btn:not(.active):hover{color:#6a6460;}
+
+/* Continent selector */
+.cont-wrap{display:flex;gap:.4rem;flex-wrap:wrap;padding:.3rem 0 .8rem;margin-bottom:.6rem;}
+
+.cont-btn{flex-shrink:0;padding:.32rem .65rem;border-radius:999px;font-family:'DM Sans',sans-serif;font-size:.68rem;font-weight:500;letter-spacing:.04em;cursor:pointer;border:1px solid;transition:all .18s;white-space:nowrap;background:transparent;}
+.cont-btn.active{background:rgba(201,168,76,.18);border-color:rgba(201,168,76,.5);color:var(--gold);}
+.cont-btn:not(.active){border-color:rgba(255,255,255,.08);color:#3a3530;}
+.cont-btn:not(.active):hover{border-color:rgba(255,255,255,.14);color:#6a6460;}
+
+/* Mastery bar */
+.mastery-wrap{margin-bottom:.9rem;}
+.mastery-header{display:flex;justify-content:space-between;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:.3rem;}
+.mastery-track{height:4px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden;position:relative;}
+.mastery-fill-wrong{position:absolute;left:0;top:0;height:100%;background:rgba(210,80,80,.35);border-radius:4px;transition:width .5s cubic-bezier(.4,0,.2,1);}
+.mastery-fill-ok{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,#4aa064,var(--green));border-radius:4px;transition:width .5s cubic-bezier(.4,0,.2,1);}
+
+/* Scores */
+.scores{display:flex;gap:.45rem;margin-bottom:.9rem;justify-content:center;flex-wrap:wrap;}
+.pill{display:flex;align-items:center;gap:.35rem;padding:.35rem .75rem;border-radius:999px;font-size:.74rem;font-weight:500;border:1px solid;}
+.pill-n{font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:600;}
+.c-ok{background:var(--green-dim);border-color:rgba(74,160,100,.28);color:var(--green);}
+.c-no{background:var(--red-dim);border-color:rgba(210,80,80,.25);color:var(--red);}
+.c-str{background:var(--gold-dim);border-color:rgba(201,168,76,.28);color:var(--gold);}
+.c-rec{background:rgba(140,100,200,.12);border-color:rgba(140,100,200,.28);color:#b899f5;}
+
+/* Progress */
+.prog-wrap{margin-bottom:.9rem;}
+.prog-labels{display:flex;justify-content:space-between;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:.3rem;}
+.prog-track{height:2px;background:rgba(255,255,255,.05);border-radius:2px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,#7a5f20,var(--gold));border-radius:2px;transition:width .6s cubic-bezier(.4,0,.2,1);}
+
+/* Card */
+.scene{perspective:1100px;cursor:pointer;margin-bottom:.8rem;}
+.card{position:relative;width:100%;height:340px;transform-style:preserve-3d;transition:transform .6s cubic-bezier(.4,0,.2,1);}
+.card.flipped{transform:rotateY(180deg);}
+.face{position:absolute;inset:0;border-radius:18px;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;border:1px solid var(--border);background:var(--card);}
+
+/* Front */
+.front{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.7rem;}
+
+
+
+.flag-emoji{font-size:7rem;line-height:1;user-select:none;transition:transform .2s;display:flex;align-items:center;justify-content:center;}
+.scene:hover 
+
+
+.flag-emoji{transform:scale(1.04);}
+.tap-hint{font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:#252220;display:flex;align-items:center;gap:.4rem;}
+.tap-hint::before,.tap-hint::after{content:'';display:block;height:1px;width:18px;background:#252220;}
+
+/* Back */
+.back{transform:rotateY(180deg);display:flex;flex-direction:column;padding:.9rem 1.1rem;gap:.35rem;}
+.back-top{display:flex;align-items:center;gap:.9rem;flex-shrink:0;}
+.flag-emoji-sm{font-size:2.1rem;line-height:1;flex-shrink:0;user-select:none;}
+.country-name{font-family:'Cormorant Garamond',serif;font-size:1.7rem;font-weight:600;color:var(--text);line-height:1.1;}
+.meta-row{display:flex;align-items:center;gap:.4rem;margin-top:.2rem;flex-wrap:wrap;}
+.meta-item{font-size:.72rem;color:#5a5450;}
+.meta-sep{font-size:.72rem;color:#2a2622;}
+.divider{height:1px;background:linear-gradient(90deg,rgba(201,168,76,.35),transparent);flex-shrink:0;}
+.fact-text{font-size:.82rem;line-height:1.65;color:var(--muted);font-weight:300;flex:1;overflow:hidden;}
+
+/* Multiple choice options */
+.mc-options{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.7rem;}
+.mc-btn{padding:.7rem .5rem;border:1px solid rgba(255,255,255,.09);border-radius:12px;background:rgba(255,255,255,.04);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:400;cursor:pointer;transition:all .18s;text-align:center;line-height:1.2;}
+.mc-btn:hover:not(:disabled){border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:var(--text);}
+.mc-btn:disabled{cursor:default;}
+.mc-btn.correct{background:rgba(74,160,100,.2);border-color:rgba(74,160,100,.5);color:var(--green);}
+.mc-btn.wrong{background:rgba(210,80,80,.15);border-color:rgba(210,80,80,.4);color:var(--red);}
+.mc-btn.reveal{background:rgba(74,160,100,.1);border-color:rgba(74,160,100,.3);color:#5a9a72;}
+
+/* Flashcard nav row */
+.nav-row{display:grid;grid-template-columns:auto 1fr 1fr auto;gap:.5rem;align-items:center;margin-bottom:.7rem;}
+.btn{padding:.8rem .5rem;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:500;cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:center;gap:.3rem;}
+.btn:active{transform:scale(.97);}
+.btn:disabled{opacity:.2;pointer-events:none;}
+.btn-ok{background:var(--green-dim);border:1px solid rgba(74,160,100,.35);color:var(--green);}
+.btn-ok:hover:not(:disabled){background:rgba(74,160,100,.25);border-color:rgba(74,160,100,.55);}
+.btn-no{background:var(--red-dim);border:1px solid rgba(210,80,80,.3);color:var(--red);}
+.btn-no:hover:not(:disabled){background:rgba(210,80,80,.22);border-color:rgba(210,80,80,.5);}
+.btn-nav{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#5a5450;padding:.8rem .65rem;}
+.btn-nav:hover:not(:disabled){background:rgba(255,255,255,.09);color:var(--muted);}
+
+/* Next button (MC mode) */
+.btn-next{width:100%;padding:.82rem;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:.84rem;font-weight:500;cursor:pointer;transition:all .18s;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--muted);display:none;margin-bottom:.7rem;}
+.btn-next:hover{background:rgba(255,255,255,.1);color:var(--text);}
+.btn-next.show{display:block;}
+
+.reviewing-badge{display:none;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:#4a4440;text-align:center;margin-top:-.3rem;margin-bottom:.4rem;}
+.reviewing-badge.show{display:block;}
+
+/* Stats modal */
+.stats-overlay{position:fixed;inset:0;background:rgba(8,8,16,.88);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s;}
+.stats-overlay.show{opacity:1;pointer-events:all;}
+.stats-panel{background:#13131f;border:1px solid rgba(255,255,255,.08);border-radius:20px 20px 0 0;width:100%;max-width:460px;padding:1.5rem 1.4rem 2.5rem;transform:translateY(40px);transition:transform .3s cubic-bezier(.4,0,.2,1);}
+.stats-overlay.show .stats-panel{transform:translateY(0);}
+.stats-title{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;color:var(--text);margin-bottom:1.2rem;display:flex;justify-content:space-between;align-items:center;}
+.stats-close{background:none;border:none;color:#3a3530;font-size:1.2rem;cursor:pointer;padding:.2rem;}
+.stats-close:hover{color:var(--muted);}
+.stats-cont{margin-bottom:.9rem;}
+.stats-cont-name{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:.35rem;display:flex;justify-content:space-between;}
+.stats-bar-track{height:6px;background:rgba(255,255,255,.05);border-radius:6px;overflow:hidden;position:relative;}
+.stats-bar-w{position:absolute;left:0;top:0;height:100%;background:rgba(210,80,80,.3);border-radius:6px;}
+.stats-bar-ok{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,#4aa064,var(--green));border-radius:6px;}
+.stats-records{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6rem;margin-top:1.2rem;}
+.stat-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:.75rem .6rem;text-align:center;}
+.stat-card-n{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;color:var(--text);}
+.stat-card-l{font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:#3a3530;margin-top:.1rem;}
+.stats-btn{position:fixed;top:1rem;left:1rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:.35rem .6rem;color:#3a3530;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif;z-index:40;transition:color .2s;}
+.stats-btn:hover{color:#6a6460;}
+
+/* Streak badge */
+#streak-badge{position:fixed;top:1rem;right:1rem;background:var(--gold-dim);border:1px solid rgba(201,168,76,.3);border-radius:999px;padding:.3rem .6rem;font-size:.72rem;color:var(--gold);font-weight:500;z-index:20;transition:opacity .4s,transform .4s;opacity:0;transform:translateY(-6px);pointer-events:none;}
+#streak-badge.show{opacity:1;transform:translateY(0);}
+
+footer{text-align:center;font-size:.63rem;color:#222018;letter-spacing:.08em;margin-top:.8rem;}
+
+@media (min-width: 600px) {
+  body { padding: 2rem 1.5rem 3rem; }
+  #app { max-width: 560px; }
+  .title { font-size: 2.2rem; }
+  .card { height: 380px; }
+  #flag-front { width: 180px !important; height: 120px !important; }
+  .scores { gap: .6rem; }
+  .pill { padding: .4rem .9rem; font-size: .8rem; }
+  .pill-n { font-size: 1.1rem; }
+  .cont-btn { padding: .38rem .75rem; font-size: .72rem; }
+  .mc-btn { font-size: .85rem; padding: .78rem .6rem; }
+  .btn { font-size: .85rem; }
+  .fact-text { font-size: .88rem; }
+}
+
+.extra-grid{display:grid;grid-template-columns:1fr 1fr;gap:.28rem .5rem;flex-shrink:0;}
+.extra-item{display:flex;align-items:baseline;gap:.3rem;font-size:.72rem;color:#6a6460;line-height:1.3;}
+.extra-item.extra-full{grid-column:1/-1;}
+.extra-icon{font-size:.7rem;flex-shrink:0;}
+</style>
+</head>
+<body>
+
+<div id="streak-badge">🔥 <span id="streak-num">0</span> en racha</div>
+<button class="stats-btn" onclick="openStats()">📊 Stats</button>
+
+<!-- Stats modal -->
+<div class="stats-overlay" id="stats-overlay" onclick="closeStats(event)">
+  <div class="stats-panel">
+    <div class="stats-title">
+      Mis estadísticas
+      <button class="stats-close" onclick="closeStats()">✕</button>
+    </div>
+    <div id="stats-conts"></div>
+    <div class="stats-records" id="stats-records"></div>
+  </div>
+</div>
+
+<div id="app">
+  <h1 class="title">Banderas del <em>Mundo</em></h1>
+
+  <!-- Mode toggle -->
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="mode-flash" onclick="setMode('flash')">🃏 Flashcard</button>
+    <button class="mode-btn" id="mode-test"   onclick="setMode('test')">🎯 Test</button>
+    <button class="mode-btn" id="mode-timer"  onclick="setMode('timer')">⏱️ Tiempo</button>
+    <button class="mode-btn" id="mode-marathon" onclick="setMode('marathon')">🔄 Maratón</button>
+  </div>
+  <!-- Timer display -->
+  <div id="timer-wrap" style="display:none;text-align:center;margin-bottom:.7rem;">
+    <div id="timer-display" style="font-family:'Cormorant Garamond',serif;font-size:2.5rem;font-weight:600;color:var(--gold);line-height:1;">60</div>
+    <div style="font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:#3a3530;">segundos</div>
+  </div>
+  <!-- Marathon progress -->
+  <div id="marathon-wrap" style="display:none;text-align:center;margin-bottom:.6rem;font-size:.72rem;color:#5a5450;letter-spacing:.06em;">
+    Sin dominar: <span id="marathon-left" style="color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:600;">0</span>
+  </div>
+  <!-- End screen -->
+  <div id="end-screen" style="display:none;background:#13131f;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:1.8rem 1.5rem;text-align:center;margin-bottom:1rem;">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;color:var(--text);margin-bottom:.5rem;" id="end-title">¡Tiempo!</div>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:1.2rem;" id="end-msg"></div>
+    <button onclick="restartMode()" style="padding:.75rem 2rem;border:none;border-radius:12px;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.35);color:var(--gold);font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;cursor:pointer;">Jugar de nuevo</button>
+  </div>
+
+  <!-- Continent selector -->
+  <div class="cont-wrap" id="cont-wrap">
+    <button class="cont-btn active" data-co="all" onclick="setCont(this)">🌐 Todos (196)</button>
+    <button class="cont-btn" data-co="A"   onclick="setCont(this)">🌍 África (53)</button>
+    <button class="cont-btn" data-co="N"   onclick="setCont(this)">🌎 N. América (23)</button>
+    <button class="cont-btn" data-co="S"   onclick="setCont(this)">🌎 S. América (12)</button>
+    <button class="cont-btn" data-co="As"  onclick="setCont(this)">🌏 Asia (48)</button>
+    <button class="cont-btn" data-co="E"   onclick="setCont(this)">🏛️ Europa (46)</button>
+    <button class="cont-btn" data-co="O"   onclick="setCont(this)">🏝️ Oceanía (14)</button>
+  </div>
+
+  <!-- Mastery bar -->
+  <div class="mastery-wrap">
+    <div class="mastery-header">
+      <span id="mastery-label">Dominadas</span>
+      <span id="mastery-count">0 / 196</span>
+    </div>
+    <div class="mastery-track">
+      <div class="mastery-fill-wrong" id="mastery-wrong" style="width:0%"></div>
+      <div class="mastery-fill-ok"    id="mastery-ok"    style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- Scores -->
+  <div class="scores">
+    <div class="pill c-ok"><span class="pill-n" id="sc-correct">0</span><span>Aciertos</span></div>
+    <div class="pill c-no"><span class="pill-n" id="sc-wrong">0</span><span>Fallos</span></div>
+    <div class="pill c-str"><span class="pill-n" id="sc-streak">0</span><span>Racha</span></div>
+    <div class="pill c-rec"><span class="pill-n" id="sc-record">0</span><span>Récord</span></div>
+  </div>
+
+  <!-- Progress -->
+  <div class="prog-wrap">
+    <div class="prog-labels">
+      <span id="prog-label">Todos los países</span>
+      <span><span id="prog-cur">0</span> / <span id="prog-tot">196</span></span>
+    </div>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+  </div>
+
+  <!-- Card -->
+  <div class="scene" id="scene" onclick="handleCardClick()">
+    <div class="card" id="card">
+      <div class="face front">
+        <img id="flag-front" src="" alt="" data-size="lg" style="width:160px;height:107px;object-fit:cover;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.07);display:block;">
+        <p class="tap-hint" id="tap-hint">toca para revelar</p>
+      </div>
+      <div class="face back">
+        <div class="back-top">
+          <img id="flag-back" src="" alt="" data-size="sm" style="width:44px;height:29px;object-fit:cover;border-radius:4px;box-shadow:0 2px 10px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.07);flex-shrink:0;">
+          <div>
+            <h2 class="country-name" id="country-name">—</h2>
+            <div class="meta-row">
+              <span class="meta-item">🏛 <span id="meta-cap">—</span></span>
+              <span class="meta-sep">·</span>
+              <span class="meta-item">👥 <span id="meta-pop">—</span></span>
+            </div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="extra-grid" id="extra-grid">
+          <div class="extra-item"><span class="extra-icon">🗣️</span><span id="meta-lang">—</span></div>
+          <div class="extra-item"><span class="extra-icon">💰</span><span id="meta-cur">—</span></div>
+          <div class="extra-item"><span class="extra-icon">🌐</span><span id="meta-dom">—</span></div>
+          <div class="extra-item"><span class="extra-icon">📐</span><span id="meta-area">—</span></div>
+          <div class="extra-item extra-full"><span class="extra-icon">🏔️</span><span id="meta-peak">—</span></div>
+        </div>
+        <div class="divider"></div>
+        <p class="fact-text" id="fact-text"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Multiple choice options (test mode) -->
+  <div class="mc-options" id="mc-options" style="display:none">
+    <button class="mc-btn" id="mc0" onclick="pickAnswer(0)"></button>
+    <button class="mc-btn" id="mc1" onclick="pickAnswer(1)"></button>
+    <button class="mc-btn" id="mc2" onclick="pickAnswer(2)"></button>
+    <button class="mc-btn" id="mc3" onclick="pickAnswer(3)"></button>
+  </div>
+
+  <!-- Next button (test mode) -->
+  <button class="btn-next" id="btn-next" onclick="advance()">Siguiente →</button>
+
+  <!-- Flashcard controls -->
+  <div class="reviewing-badge" id="reviewing-badge">← revisando · toca para continuar</div>
+  <div class="nav-row" id="flash-nav">
+    <button class="btn btn-nav" id="btn-back"  disabled onclick="goBack()">← Atrás</button>
+    <button class="btn btn-ok"  id="btn-ok"    disabled onclick="handleAnswer(true)">✓ Lo sabía</button>
+    <button class="btn btn-no"  id="btn-no"    disabled onclick="handleAnswer(false)">✗ No lo sabía</button>
+    <button class="btn btn-nav" id="btn-skip"  onclick="handleSkip()">→</button>
+  </div>
+
+  <footer id="footer">196 cartas restantes</footer>
+</div>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────────────
+const COUNTRIES = [
+  {c:"AF",co:"As",cap:"Kabul",pop:"41 M",n:"Afganistán",lang:"Pastún / Dari",cur:"Afgani",dom:".af",area:"652,230 km²",peak:"Noshaq (7,492 m)",f:"Afganistán tiene la segunda reserva de litio más grande del mundo, valorada en billones de dólares, que permanece mayormente sin explotar."},
+  {c:"AL",co:"E",cap:"Tirana",pop:"2.8 M",n:"Albania",lang:"Albanés",cur:"Lek",dom:".al",area:"28,748 km²",peak:"Korab (2,764 m)",f:"Albania es uno de los pocos países del mundo que nunca ha sido colonizado por una potencia extranjera en toda su historia moderna."},
+  {c:"DZ",co:"A",cap:"Argel",pop:"45 M",n:"Argelia",lang:"Árabe / Bereber",cur:"Dinar argelino",dom:".dz",area:"2,381,741 km²",peak:"Tahat (2,908 m)",f:"Argelia es el país más grande de África y el décimo más grande del mundo; más del 80% de su territorio es desierto del Sahara."},
+  {c:"AD",co:"E",cap:"Andorra la Vella",pop:"0.08 M",n:"Andorra",lang:"Catalán",cur:"Euro",dom:".ad",area:"468 km²",peak:"Coma Pedrosa (2,942 m)",f:"Andorra no tiene aeropuerto propio ni ejército, y su economía se basa casi completamente en el turismo de esquí y las compras libres de impuestos."},
+  {c:"AO",co:"A",cap:"Luanda",pop:"35 M",n:"Angola",lang:"Portugués",cur:"Kwanza",dom:".ao",area:"1,246,700 km²",peak:"Morro de Moco (2,620 m)",f:"Angola produce alrededor del 1.8% del petróleo mundial y es el segundo mayor productor de crudo de África subsahariana."},
+  {c:"AG",co:"N",cap:"Saint John's",pop:"0.1 M",n:"Antigua y Barbuda",lang:"Inglés",cur:"Dólar Caribe Oriental",dom:".ag",area:"443 km²",peak:"Boggy Peak (402 m)",f:"Antigua tiene exactamente 365 playas, una para cada día del año, según su famoso eslogan turístico."},
+  {c:"AR",co:"S",cap:"Buenos Aires",pop:"46 M",n:"Argentina",lang:"Español",cur:"Peso argentino",dom:".ar",area:"2,780,400 km²",peak:"Aconcagua (6,961 m)",f:"Argentina tiene más psicólogos por habitante que cualquier otro país del mundo: más de 200 por cada 100,000 personas."},
+  {c:"AM",co:"As",cap:"Ereván",pop:"3 M",n:"Armenia",lang:"Armenio",cur:"Dram",dom:".am",area:"29,743 km²",peak:"Aragats (4,090 m)",f:"Armenia fue el primer país del mundo en adoptar el cristianismo como religión de Estado oficial, en el año 301 d.C."},
+  {c:"AU",co:"O",cap:"Canberra",pop:"26 M",n:"Australia",lang:"Inglés",cur:"Dólar australiano",dom:".au",area:"7,692,024 km²",peak:"Kosciuszko (2,228 m)",f:"Australia es el único continente gobernado por un solo país, y alberga el 10% de todas las especies de biodiversidad del planeta."},
+  {c:"AT",co:"E",cap:"Viena",pop:"9 M",n:"Austria",lang:"Alemán",cur:"Euro",dom:".at",area:"83,871 km²",peak:"Grossglockner (3,798 m)",f:"Austria es la cuna del psicoanálisis: Sigmund Freud nació y desarrolló toda su teoría en Viena a finales del siglo XIX."},
+  {c:"AZ",co:"As",cap:"Bakú",pop:"10 M",n:"Azerbaiyán",lang:"Azerbaiyano",cur:"Manat",dom:".az",area:"86,600 km²",peak:"Bazardüzü (4,466 m)",f:"Azerbaiyán tiene más volcanes de lodo activos que cualquier otro país, con más de 400 registrados en su territorio."},
+  {c:"BS",co:"N",cap:"Nasáu",pop:"0.4 M",n:"Bahamas",lang:"Inglés",cur:"Dólar bahameño",dom:".bs",area:"13,943 km²",peak:"Mount Alvernia (63 m)",f:"Las Bahamas tienen las aguas más transparentes del mundo: la visibilidad submarina puede alcanzar los 60 metros de profundidad."},
+  {c:"BH",co:"As",cap:"Manama",pop:"1.5 M",n:"Baréin",lang:"Árabe",cur:"Dinar bareiní",dom:".bh",area:"765 km²",peak:"Jabal al Dukhan (135 m)",f:"Baréin fue el primer país del Golfo Pérsico en descubrir petróleo, en 1932, lo que transformó radicalmente su economía."},
+  {c:"BD",co:"As",cap:"Daca",pop:"170 M",n:"Bangladés",lang:"Bengalí",cur:"Taka",dom:".bd",area:"147,570 km²",peak:"Keokradong (1,230 m)",f:"Bangladés tiene la densidad de población más alta del mundo entre países grandes, con más de 1,100 personas por kilómetro cuadrado."},
+  {c:"BB",co:"N",cap:"Bridgetown",pop:"0.3 M",n:"Barbados",lang:"Inglés",cur:"Dólar de Barbados",dom:".bb",area:"430 km²",peak:"Mount Hillaby (340 m)",f:"Barbados es la cuna del ron: la destilería Mount Gay, fundada en 1703, es considerada la más antigua del mundo en operación continua."},
+  {c:"BY",co:"E",cap:"Minsk",pop:"9.4 M",n:"Bielorrusia",lang:"Bielorruso / Ruso",cur:"Rublo bielorruso",dom:".by",area:"207,600 km²",peak:"Dzyarzhynskaya (346 m)",f:"Bielorrusia es el único país de Europa que mantiene la pena de muerte y que nunca se ha integrado a la Unión Europea ni a la OTAN."},
+  {c:"BE",co:"E",cap:"Bruselas",pop:"11.6 M",n:"Bélgica",lang:"Neerlandés/Francés/Alemán",cur:"Euro",dom:".be",area:"30,528 km²",peak:"Signal de Botrange (694 m)",f:"Bélgica produce más de 220,000 toneladas de chocolate al año y alberga el aeropuerto de Bruselas, el mayor distribuidor de chocolate del mundo."},
+  {c:"BZ",co:"N",cap:"Belmopán",pop:"0.4 M",n:"Belice",lang:"Inglés",cur:"Dólar de Belice",dom:".bz",area:"22,966 km²",peak:"Doyle's Delight (1,124 m)",f:"Belice es el único país de Centroamérica cuyo idioma oficial es el inglés, herencia de su pasado como colonia británica hasta 1981."},
+  {c:"BJ",co:"A",cap:"Porto-Novo",pop:"13 M",n:"Benín",lang:"Francés",cur:"Franco CFA",dom:".bj",area:"114,763 km²",peak:"Mont Sokbaro (658 m)",f:"Benín es considerado la cuna del vudú: esta religión nació en el antiguo reino de Dahomey y desde allí se extendió al Caribe y América."},
+  {c:"BT",co:"As",cap:"Timbu",pop:"0.8 M",n:"Bután",lang:"Dzongkha",cur:"Ngultrum",dom:".bt",area:"38,394 km²",peak:"Gangkhar Puensum (7,570 m)",f:"Bután es el único país del mundo que mide su prosperidad en Felicidad Nacional Bruta en lugar del Producto Interno Bruto."},
+  {c:"BO",co:"S",cap:"Sucre / La Paz",pop:"12 M",n:"Bolivia",lang:"Español/Quechua/Aimara",cur:"Boliviano",dom:".bo",area:"1,098,581 km²",peak:"Nevado Sajama (6,542 m)",f:"Bolivia tiene dos capitales: Sucre es la capital constitucional y La Paz es la sede del gobierno, la capital administrativa más alta del mundo."},
+  {c:"BA",co:"E",cap:"Sarajevo",pop:"3.2 M",n:"Bosnia y Herzegovina",lang:"Bosnio/Croata/Serbio",cur:"Marco convertible",dom:".ba",area:"51,197 km²",peak:"Maglić (2,386 m)",f:"Bosnia y Herzegovina tiene uno de los ríos más antiguos de Europa: el río Neretva ha tallado su cauce durante más de cinco millones de años."},
+  {c:"BW",co:"A",cap:"Gaborone",pop:"2.6 M",n:"Botsuana",lang:"Inglés / Setsuana",cur:"Pula",dom:".bw",area:"581,730 km²",peak:"Tsodilo (1,489 m)",f:"Botsuana pasó de ser uno de los países más pobres del mundo en 1966 a ser de renta media-alta, gracias a sus enormes reservas de diamantes."},
+  {c:"BR",co:"S",cap:"Brasilia",pop:"215 M",n:"Brasil",lang:"Portugués",cur:"Real",dom:".br",area:"8,515,767 km²",peak:"Pico da Neblina (2,994 m)",f:"Brasil alberga el 60% de la selva amazónica, el bosque tropical más grande de la Tierra, que produce el 20% del oxígeno del planeta."},
+  {c:"BN",co:"As",cap:"Bandar Seri Begawan",pop:"0.45 M",n:"Brunéi",lang:"Malayo",cur:"Dólar de Brunéi",dom:".bn",area:"5,765 km²",peak:"Bukit Pagon (1,850 m)",f:"Brunéi es uno de los países con mayor PIB per cápita del mundo gracias al petróleo, y su sultán reinante lleva en el trono desde 1967."},
+  {c:"BG",co:"E",cap:"Sofía",pop:"6.5 M",n:"Bulgaria",lang:"Búlgaro",cur:"Lev",dom:".bg",area:"110,879 km²",peak:"Musala (2,925 m)",f:"Bulgaria es el país más antiguo de Europa que no ha cambiado su nombre desde su fundación, establecido en el año 681 d.C."},
+  {c:"BF",co:"A",cap:"Uagadugú",pop:"22 M",n:"Burkina Faso",lang:"Francés",cur:"Franco CFA",dom:".bf",area:"274,200 km²",peak:"Ténakourou (749 m)",f:"Burkina Faso es el mayor productor de algodón de África occidental y su nombre significa literalmente 'tierra de hombres íntegros'."},
+  {c:"BI",co:"A",cap:"Gitega",pop:"13 M",n:"Burundi",lang:"Kirundi / Francés",cur:"Franco de Burundi",dom:".bi",area:"27,834 km²",peak:"Heha (2,670 m)",f:"Burundi es uno de los países más pobres del mundo pero tiene una de las tasas de crecimiento demográfico más altas de África."},
+  {c:"CV",co:"A",cap:"Praia",pop:"0.6 M",n:"Cabo Verde",lang:"Portugués",cur:"Escudo caboverdiano",dom:".cv",area:"4,033 km²",peak:"Pico do Fogo (2,829 m)",f:"Cabo Verde es un archipiélago volcánico que no tenía habitantes cuando los portugueses lo descubrieron en 1456; toda su población desciende de colonos y esclavos."},
+  {c:"KH",co:"As",cap:"Nom Pen",pop:"17 M",n:"Camboya",lang:"Jemer",cur:"Riel",dom:".kh",area:"181,035 km²",peak:"Phnom Aural (1,813 m)",f:"Angkor Wat, en Camboya, es el complejo religioso más grande del mundo, y su silueta aparece en la bandera nacional del país."},
+  {c:"CM",co:"A",cap:"Yaundé",pop:"28 M",n:"Camerún",lang:"Francés / Inglés",cur:"Franco CFA",dom:".cm",area:"475,442 km²",peak:"Monte Camerún (4,095 m)",f:"Camerún es llamado 'el África en miniatura' porque concentra casi todos los ecosistemas del continente: selvas, sabanas, montañas y desiertos."},
+  {c:"CA",co:"N",cap:"Ottawa",pop:"38 M",n:"Canadá",lang:"Inglés / Francés",cur:"Dólar canadiense",dom:".ca",area:"9,984,670 km²",peak:"Monte Logan (5,959 m)",f:"Canadá tiene la línea costera más larga del mundo, con más de 202,000 kilómetros de costa, el doble que el segundo en la lista."},
+  {c:"CF",co:"A",cap:"Bangui",pop:"5 M",n:"Rep. Centroafricana",lang:"Sango / Francés",cur:"Franco CFA",dom:".cf",area:"622,984 km²",peak:"Mont Ngaoui (1,420 m)",f:"La República Centroafricana alberga la segunda selva tropical más densa de África y enormes reservas de diamantes, oro y uranio sin explotar."},
+  {c:"TD",co:"A",cap:"Yamena",pop:"18 M",n:"Chad",lang:"Árabe / Francés",cur:"Franco CFA",dom:".td",area:"1,284,000 km²",peak:"Emi Koussi (3,415 m)",f:"El lago Chad, que da nombre al país, ha encogido más del 90% en los últimos 60 años a causa del cambio climático y la extracción excesiva de agua."},
+  {c:"CL",co:"S",cap:"Santiago",pop:"19 M",n:"Chile",lang:"Español",cur:"Peso chileno",dom:".cl",area:"756,102 km²",peak:"Ojos del Salado (6,893 m)",f:"Chile es el país más largo y angosto del mundo, con 4,300 km de norte a sur y un promedio de solo 177 km de ancho."},
+  {c:"CN",co:"As",cap:"Pekín",pop:"1 400 M",n:"China",lang:"Chino mandarín",cur:"Yuan",dom:".cn",area:"9,596,960 km²",peak:"Everest (8,848 m)",f:"China tiene la red de trenes de alta velocidad más extensa del mundo, con más de 42,000 kilómetros de vías que superan al resto del planeta combinado."},
+  {c:"CO",co:"S",cap:"Bogotá",pop:"52 M",n:"Colombia",lang:"Español",cur:"Peso colombiano",dom:".co",area:"1,141,748 km²",peak:"Pico Cristóbal Colón (5,730 m)",f:"Colombia es el único país de Sudamérica con costas tanto en el Océano Pacífico como en el Mar Caribe al mismo tiempo."},
+  {c:"KM",co:"A",cap:"Moroni",pop:"0.9 M",n:"Comoras",lang:"Árabe/Francés/Comorense",cur:"Franco comorense",dom:".km",area:"2,235 km²",peak:"Karthala (2,361 m)",f:"Las Comoras son el único país del mundo donde el árabe coránico es idioma oficial junto con el francés y el comorense."},
+  {c:"CD",co:"A",cap:"Kinshasa",pop:"100 M",n:"Congo (RD)",lang:"Francés",cur:"Franco congoleño",dom:".cd",area:"2,344,858 km²",peak:"Margherita Peak (5,109 m)",f:"La República Democrática del Congo tiene el mayor potencial hidroeléctrico del mundo en el río Congo, el segundo río más caudaloso del planeta."},
+  {c:"CG",co:"A",cap:"Brazzaville",pop:"6 M",n:"Congo (Rep.)",lang:"Francés",cur:"Franco CFA",dom:".cg",area:"342,000 km²",peak:"Mont Nabeba (1,020 m)",f:"La República del Congo tiene una de las densidades de selva tropical más altas de África central y alberga al gorila de llanura occidental."},
+  {c:"CR",co:"N",cap:"San José",pop:"5 M",n:"Costa Rica",lang:"Español",cur:"Colón costarricense",dom:".cr",area:"51,100 km²",peak:"Cerro Chirripó (3,821 m)",f:"Costa Rica abolió su ejército en 1948 y desde entonces destina ese presupuesto a educación y salud, con resultados ejemplares en bienestar."},
+  {c:"HR",co:"E",cap:"Zagreb",pop:"4 M",n:"Croacia",lang:"Croata",cur:"Euro",dom:".hr",area:"56,594 km²",peak:"Dinara (1,831 m)",f:"Croacia inventó la corbata: el pañuelo que llevaban los soldados croatas en el siglo XVII inspiró la moda que hoy usan hombres en todo el mundo."},
+  {c:"CU",co:"N",cap:"La Habana",pop:"11 M",n:"Cuba",lang:"Español",cur:"Peso cubano",dom:".cu",area:"109,884 km²",peak:"Pico Turquino (1,974 m)",f:"Cuba tiene más médicos por habitante que prácticamente cualquier otro país del mundo, y exporta servicios médicos a más de 60 naciones."},
+  {c:"CY",co:"E",cap:"Nicosia",pop:"1.2 M",n:"Chipre",lang:"Griego / Turco",cur:"Euro",dom:".cy",area:"9,251 km²",peak:"Monte Olimpo (1,952 m)",f:"Chipre es la única capital del mundo dividida en dos partes: Nicosia tiene una línea verde que separa la zona griega de la turca desde 1974."},
+  {c:"CZ",co:"E",cap:"Praga",pop:"10.9 M",n:"Rep. Checa",lang:"Checo",cur:"Corona checa",dom:".cz",area:"78,866 km²",peak:"Sněžka (1,603 m)",f:"La República Checa tiene el mayor consumo de cerveza per cápita del mundo, con más de 180 litros por persona al año."},
+  {c:"DK",co:"E",cap:"Copenhague",pop:"5.9 M",n:"Dinamarca",lang:"Danés",cur:"Corona danesa",dom:".dk",area:"43,094 km²",peak:"Møllehøj (171 m)",f:"Dinamarca es consistentemente clasificada como uno de los países más felices del mundo y es la cuna del concepto 'hygge', el bienestar íntimo."},
+  {c:"DJ",co:"A",cap:"Yibuti",pop:"1 M",n:"Yibuti",lang:"Árabe / Francés",cur:"Franco yibutiano",dom:".dj",area:"23,200 km²",peak:"Moussa Ali (2,028 m)",f:"Yibuti alberga la base militar extranjera más grande de EE.UU. en África y también tiene presencia militar china, francesa y japonesa en su pequeño territorio."},
+  {c:"DM",co:"N",cap:"Roseau",pop:"0.07 M",n:"Dominica",lang:"Inglés",cur:"Dólar Caribe Oriental",dom:".dm",area:"751 km²",peak:"Morne Diablotins (1,447 m)",f:"Dominica es conocida como 'la isla de la naturaleza' y es tan montañosa y selvática que fue la única isla que los europeos tardaron más de un siglo en colonizar."},
+  {c:"DO",co:"N",cap:"Santo Domingo",pop:"11 M",n:"Rep. Dominicana",lang:"Español",cur:"Peso dominicano",dom:".do",area:"48,671 km²",peak:"Pico Duarte (3,087 m)",f:"República Dominicana alberga el punto más alto del Caribe, el Pico Duarte con 3,087 metros, y también el lago más grande de las Antillas."},
+  {c:"EC",co:"S",cap:"Quito",pop:"18 M",n:"Ecuador",lang:"Español",cur:"Dólar estadounidense",dom:".ec",area:"283,561 km²",peak:"Chimborazo (6,263 m)",f:"Ecuador es el único país del mundo que lleva el nombre de un fenómeno geográfico: la línea ecuatorial que atraviesa su territorio."},
+  {c:"EG",co:"A",cap:"El Cairo",pop:"105 M",n:"Egipto",lang:"Árabe",cur:"Libra egipcia",dom:".eg",area:"1,002,450 km²",peak:"Monte Sinaí (2,629 m)",f:"Egipto es hogar de la única de las Siete Maravillas del Mundo Antiguo que sigue en pie: las pirámides de Giza, construidas hace más de 4,500 años."},
+  {c:"SV",co:"N",cap:"San Salvador",pop:"6.5 M",n:"El Salvador",lang:"Español",cur:"Dólar estadounidense",dom:".sv",area:"21,041 km²",peak:"Santa Ana (2,381 m)",f:"El Salvador es el país más pequeño de Centroamérica y el único sin costa caribeña, pero tiene una de las tasas de surf más reconocidas del mundo."},
+  {c:"GQ",co:"A",cap:"Malabo",pop:"1.5 M",n:"Guinea Ecuatorial",lang:"Español/Francés/Portugués",cur:"Franco CFA",dom:".gq",area:"28,051 km²",peak:"Pico Basile (3,011 m)",f:"Guinea Ecuatorial es el único país de África donde el español es idioma oficial, herencia de su colonización por España."},
+  {c:"ER",co:"A",cap:"Asmara",pop:"3.5 M",n:"Eritrea",lang:"Tigriña/Árabe/Inglés",cur:"Nakfa",dom:".er",area:"117,600 km²",peak:"Soira (3,018 m)",f:"Eritrea es uno de los países más jóvenes del mundo: se independizó de Etiopía apenas en 1993, tras 30 años de guerra."},
+  {c:"EE",co:"E",cap:"Tallin",pop:"1.3 M",n:"Estonia",lang:"Estonio",cur:"Euro",dom:".ee",area:"45,228 km²",peak:"Suur Munamägi (318 m)",f:"Estonia fue el primer país del mundo en celebrar elecciones nacionales por internet en 2005, y hoy tiene uno de los gobiernos digitales más avanzados."},
+  {c:"SZ",co:"A",cap:"Mbabane",pop:"1.2 M",n:"Esuatini",lang:"Suazi / Inglés",cur:"Lilangeni",dom:".sz",area:"17,364 km²",peak:"Emlembe (1,862 m)",f:"Esuatini, antes llamada Suazilandia, es una de las tres monarquías absolutas que quedan en el mundo junto con Arabia Saudí y Ciudad del Vaticano."},
+  {c:"ET",co:"A",cap:"Adís Abeba",pop:"125 M",n:"Etiopía",lang:"Amhárico",cur:"Birr etíope",dom:".et",area:"1,104,300 km²",peak:"Ras Dashen (4,550 m)",f:"Etiopía tiene su propio calendario con 13 meses y actualmente va 7 u 8 años detrás del calendario gregoriano, por lo que 'llevan' otro año."},
+  {c:"FJ",co:"O",cap:"Suva",pop:"0.93 M",n:"Fiyi",lang:"Inglés/Fiyiano/Hindi",cur:"Dólar fiyiano",dom:".fj",area:"18,274 km²",peak:"Tomanivi (1,324 m)",f:"Fiyi está compuesto por más de 330 islas, pero solo un tercio de ellas están habitadas; las demás son arrecifes de coral o reservas naturales."},
+  {c:"FI",co:"E",cap:"Helsinki",pop:"5.5 M",n:"Finlandia",lang:"Finlandés / Sueco",cur:"Euro",dom:".fi",area:"338,455 km²",peak:"Halti (1,324 m)",f:"Finlandia tiene más saunas que automóviles: existen aproximadamente 3.3 millones de saunas para una población de 5.5 millones de personas."},
+  {c:"FR",co:"E",cap:"París",pop:"68 M",n:"Francia",lang:"Francés",cur:"Euro",dom:".fr",area:"551,695 km²",peak:"Mont Blanc (4,808 m)",f:"Francia es el país más visitado del mundo, con más de 90 millones de turistas al año, y el museo del Louvre es el más visitado del planeta."},
+  {c:"GA",co:"A",cap:"Libreville",pop:"2.3 M",n:"Gabón",lang:"Francés",cur:"Franco CFA",dom:".ga",area:"267,668 km²",peak:"Mont Iboundji (1,575 m)",f:"Gabón tiene el 88% de su territorio cubierto por selva tropical y alberga al 80% de los gorilas de llanura occidental que quedan en el mundo."},
+  {c:"GM",co:"A",cap:"Banjul",pop:"2.6 M",n:"Gambia",lang:"Inglés",cur:"Dalasi",dom:".gm",area:"11,295 km²",peak:"Red Rock (53 m)",f:"Gambia es el país más pequeño de África continental, con solo 48 km de ancho máximo, y está completamente rodeado por Senegal excepto por su costa."},
+  {c:"GE",co:"As",cap:"Tiflis",pop:"3.7 M",n:"Georgia",lang:"Georgiano",cur:"Lari",dom:".ge",area:"69,700 km²",peak:"Shkhara (5,193 m)",f:"Georgia es el lugar de nacimiento del vino: evidencias arqueológicas de hace 8,000 años muestran que allí se domesticó por primera vez la vid."},
+  {c:"DE",co:"E",cap:"Berlín",pop:"84 M",n:"Alemania",lang:"Alemán",cur:"Euro",dom:".de",area:"357,114 km²",peak:"Zugspitze (2,962 m)",f:"Alemania tiene más de 1,500 tipos distintos de cerveza y alberga el Oktoberfest, el festival de cerveza más grande y famoso del mundo."},
+  {c:"GH",co:"A",cap:"Acra",pop:"33 M",n:"Ghana",lang:"Inglés",cur:"Cedi",dom:".gh",area:"238,533 km²",peak:"Mont Afadjato (885 m)",f:"Ghana fue el primer país africano al sur del Sahara en independizarse de la dominación colonial europea, en 1957, liderado por Kwame Nkrumah."},
+  {c:"GR",co:"E",cap:"Atenas",pop:"10.7 M",n:"Grecia",lang:"Griego",cur:"Euro",dom:".gr",area:"131,957 km²",peak:"Monte Olimpo (2,918 m)",f:"Grecia tiene más de 6,000 islas e islotes, de los cuales solo 227 están habitados; tiene la undécima línea costera más larga del mundo."},
+  {c:"GD",co:"N",cap:"Saint George's",pop:"0.1 M",n:"Granada",lang:"Inglés",cur:"Dólar Caribe Oriental",dom:".gd",area:"344 km²",peak:"Saint Catherine (840 m)",f:"Granada es el mayor productor de nuez moscada del mundo en relación a su tamaño, lo que le ganó el apodo de 'la isla de las especias'."},
+  {c:"GT",co:"N",cap:"Ciudad de Guatemala",pop:"17 M",n:"Guatemala",lang:"Español",cur:"Quetzal",dom:".gt",area:"108,889 km²",peak:"Volcán Tajumulco (4,202 m)",f:"Guatemala alberga Tikal, una de las ciudades mayas más imponentes, rodeada por la jungla y cuya pirámide principal mide 70 metros de altura."},
+  {c:"GN",co:"A",cap:"Conakri",pop:"13 M",n:"Guinea",lang:"Francés",cur:"Franco guineano",dom:".gn",area:"245,857 km²",peak:"Mont Nimba (1,752 m)",f:"Guinea tiene las mayores reservas de bauxita del mundo, el mineral del que se extrae el aluminio, con cerca del 30% del total global."},
+  {c:"GW",co:"A",cap:"Bisáu",pop:"2 M",n:"Guinea-Bisáu",lang:"Portugués",cur:"Franco CFA",dom:".gw",area:"36,125 km²",peak:"Pico Doum (300 m)",f:"Guinea-Bisáu tiene el territorio continental fragmentado en más de 80 islas e islotes, lo que lo hace uno de los países más complejos geográficamente de África."},
+  {c:"GY",co:"S",cap:"Georgetown",pop:"0.8 M",n:"Guyana",lang:"Inglés",cur:"Dólar de Guyana",dom:".gy",area:"214,969 km²",peak:"Monte Roraima (2,810 m)",f:"Guyana es el único país de América del Sur donde el inglés es idioma oficial, herencia de su pasado como Guyana Británica."},
+  {c:"HT",co:"N",cap:"Puerto Príncipe",pop:"11 M",n:"Haití",lang:"Francés / Criollo haitiano",cur:"Gourde",dom:".ht",area:"27,750 km²",peak:"Chaîne de la Selle (2,680 m)",f:"Haití fue la primera república negra del mundo, resultado de la única revolución de esclavos exitosa de la historia, en 1804."},
+  {c:"HN",co:"N",cap:"Tegucigalpa",pop:"10 M",n:"Honduras",lang:"Español",cur:"Lempira",dom:".hn",area:"112,492 km²",peak:"Cerro Las Minas (2,870 m)",f:"Honduras alberga el sitio arqueológico maya de Copán, famoso por sus elaboradas estelas esculpidas que narran la historia de sus reyes."},
+  {c:"HU",co:"E",cap:"Budapest",pop:"9.7 M",n:"Hungría",lang:"Húngaro",cur:"Forinto",dom:".hu",area:"93,028 km²",peak:"Kékes (1,014 m)",f:"Hungría tiene el tercer mayor parlamento del mundo por tamaño, y Budapest tiene más manantiales termales que cualquier otra capital del planeta."},
+  {c:"IS",co:"E",cap:"Reikiavik",pop:"0.37 M",n:"Islandia",lang:"Islandés",cur:"Corona islandesa",dom:".is",area:"103,000 km²",peak:"Hvannadalshnúkur (2,110 m)",f:"Islandia no tiene ejército y es uno de los países más pacíficos del mundo; además, prácticamente toda su energía proviene de fuentes geotérmicas y renovables."},
+  {c:"IN",co:"As",cap:"Nueva Delhi",pop:"1 430 M",n:"India",lang:"Hindi / Inglés",cur:"Rupia india",dom:".in",area:"3,287,263 km²",peak:"Kangchenjunga (8,586 m)",f:"India es el país más poblado del mundo desde 2023 y tiene más de 1,600 idiomas y dialectos distintos hablados dentro de sus fronteras."},
+  {c:"ID",co:"As",cap:"Yakarta",pop:"277 M",n:"Indonesia",lang:"Indonesio",cur:"Rupia indonesia",dom:".id",area:"1,904,569 km²",peak:"Puncak Jaya (4,884 m)",f:"Indonesia es el archipiélago más grande del mundo, con más de 17,000 islas, y tiene la cuarta población más numerosa del planeta."},
+  {c:"IR",co:"As",cap:"Teherán",pop:"87 M",n:"Irán",lang:"Persa",cur:"Rial iraní",dom:".ir",area:"1,648,195 km²",peak:"Damavand (5,610 m)",f:"Irán tiene una de las civilizaciones más antiguas del mundo: el Imperio Persa fue el mayor del mundo antiguo y su influencia cultural perdura hasta hoy."},
+  {c:"IQ",co:"As",cap:"Bagdad",pop:"43 M",n:"Irak",lang:"Árabe / Kurdo",cur:"Dinar iraquí",dom:".iq",area:"438,317 km²",peak:"Cheekha Dar (3,611 m)",f:"Irak es considerado la cuna de la civilización: en Mesopotamia, entre los ríos Tigris y Éufrates, surgió la primera escritura, las primeras ciudades y las primeras leyes."},
+  {c:"IE",co:"E",cap:"Dublín",pop:"5.1 M",n:"Irlanda",lang:"Irlandés / Inglés",cur:"Euro",dom:".ie",area:"70,273 km²",peak:"Carrauntoohil (1,041 m)",f:"Irlanda es el único país del mundo cuyo símbolo nacional es un instrumento musical: el arpa celta, que aparece en sus monedas y documentos oficiales."},
+  {c:"IL",co:"As",cap:"Jerusalén",pop:"9.5 M",n:"Israel",lang:"Hebreo / Árabe",cur:"Séquel",dom:".il",area:"20,770 km²",peak:"Monte Hermón (2,814 m)",f:"Israel tiene más startups por habitante que ningún otro país del mundo y es conocido como la 'nación startup' por su ecosistema tecnológico."},
+  {c:"IT",co:"E",cap:"Roma",pop:"60 M",n:"Italia",lang:"Italiano",cur:"Euro",dom:".it",area:"301,340 km²",peak:"Monte Rosa (4,634 m)",f:"Italia alberga más sitios del Patrimonio Mundial de la UNESCO que cualquier otro país: 58 sitios catalogados, desde el Coliseo hasta los Dolomitas."},
+  {c:"JM",co:"N",cap:"Kingston",pop:"3 M",n:"Jamaica",lang:"Inglés",cur:"Dólar jamaicano",dom:".jm",area:"10,991 km²",peak:"Blue Mountain Peak (2,256 m)",f:"Jamaica es la cuna del reggae y del rastafarismo, y sus corredores de atletismo son considerados los más rápidos del mundo en distancias cortas."},
+  {c:"JP",co:"As",cap:"Tokio",pop:"125 M",n:"Japón",lang:"Japonés",cur:"Yen",dom:".jp",area:"377,975 km²",peak:"Monte Fuji (3,776 m)",f:"Japón tiene la esperanza de vida más alta del mundo, con más de 80,000 personas centenarias, gracias a su dieta, cultura y sistema de salud."},
+  {c:"JO",co:"As",cap:"Amán",pop:"10 M",n:"Jordania",lang:"Árabe",cur:"Dinar jordano",dom:".jo",area:"89,342 km²",peak:"Jabal Umm ad Dami (1,854 m)",f:"Jordania alberga Petra, la ciudad nabatea tallada en roca rojiza hace más de 2,000 años, elegida una de las Nuevas Siete Maravillas del Mundo."},
+  {c:"KZ",co:"As",cap:"Astana",pop:"19 M",n:"Kazajistán",lang:"Kazajo / Ruso",cur:"Tenge",dom:".kz",area:"2,724,900 km²",peak:"Khan Tengri (6,995 m)",f:"Kazajistán es el mayor país sin salida al mar del mundo y el noveno mayor del planeta; alberga el cosmódromo de Baikonur, desde donde se lanzó el primer satélite artificial."},
+  {c:"KE",co:"A",cap:"Nairobi",pop:"55 M",n:"Kenia",lang:"Suajili / Inglés",cur:"Chelín keniano",dom:".ke",area:"580,367 km²",peak:"Monte Kenia (5,199 m)",f:"Kenia alberga el Valle del Rift, donde se han encontrado los fósiles humanos más antiguos, lo que llevó a los científicos a llamar a África 'la cuna de la humanidad'."},
+  {c:"KI",co:"O",cap:"Tarawa del Sur",pop:"0.12 M",n:"Kiribati",lang:"Inglés / Gilbertés",cur:"Dólar australiano",dom:".ki",area:"811 km²",peak:"Banaba (81 m)",f:"Kiribati es el primer país que recibe el año nuevo por su posición en el extremo este del planeta, y también podría ser el primero en desaparecer por el aumento del mar."},
+  {c:"KP",co:"As",cap:"Pionyang",pop:"26 M",n:"Corea del Norte",lang:"Coreano",cur:"Won norcoreano",dom:".kp",area:"120,538 km²",peak:"Paektu (2,744 m)",f:"Corea del Norte tiene su propio calendario, el juche, que cuenta los años desde el nacimiento de Kim Il-sung en 1912; actualmente están en el año 113."},
+  {c:"KR",co:"As",cap:"Seúl",pop:"52 M",n:"Corea del Sur",lang:"Coreano",cur:"Won surcoreano",dom:".kr",area:"100,210 km²",peak:"Hallasan (1,950 m)",f:"Corea del Sur tiene la velocidad de internet promedio más alta del mundo y es el país con mayor tasa de educación universitaria entre adultos jóvenes."},
+  {c:"KW",co:"As",cap:"Kuwait",pop:"4.3 M",n:"Kuwait",lang:"Árabe",cur:"Dinar kuwaití",dom:".kw",area:"17,818 km²",peak:"Unnamed (306 m)",f:"Kuwait tiene las cuartas reservas de petróleo más grandes del mundo y uno de los PIB per cápita más altos, sin cobrar impuesto sobre la renta."},
+  {c:"KG",co:"As",cap:"Biskek",pop:"6.8 M",n:"Kirguistán",lang:"Kirguís / Ruso",cur:"Som",dom:".kg",area:"199,951 km²",peak:"Jengish Chokusu (7,439 m)",f:"Kirguistán tiene el 90% de su territorio a más de 1,500 metros de altitud y alberga el lago Issyk-Kul, el segundo lago alpino más grande del mundo."},
+  {c:"LA",co:"As",cap:"Vientián",pop:"7.4 M",n:"Laos",lang:"Lao",cur:"Kip",dom:".la",area:"236,800 km²",peak:"Phou Bia (2,817 m)",f:"Laos es el país más bombardeado per cápita de la historia: EE.UU. lanzó más bombas sobre él durante la guerra de Vietnam que sobre toda Europa en la Segunda Guerra Mundial."},
+  {c:"LV",co:"E",cap:"Riga",pop:"1.8 M",n:"Letonia",lang:"Letón",cur:"Euro",dom:".lv",area:"64,589 km²",peak:"Gaiziņkalns (312 m)",f:"Letonia tiene los bosques más densos de Europa, con más del 54% de su territorio cubierto de árboles, y una de las tradiciones de canto coral más ricas del mundo."},
+  {c:"LB",co:"As",cap:"Beirut",pop:"5 M",n:"Líbano",lang:"Árabe",cur:"Libra libanesa",dom:".lb",area:"10,452 km²",peak:"Qurnat as Sawda' (3,088 m)",f:"Líbano tiene el cedro más famoso del mundo en su bandera y en la antigüedad fue el proveedor de madera de cedro para los faraones egipcios."},
+  {c:"LS",co:"A",cap:"Maseru",pop:"2.2 M",n:"Lesoto",lang:"Sesoto / Inglés",cur:"Loti",dom:".ls",area:"30,355 km²",peak:"Thabana Ntlenyana (3,482 m)",f:"Lesoto es uno de solo tres países del mundo completamente rodeados por otro (Sudáfrica), junto con San Marino y Ciudad del Vaticano."},
+  {c:"LR",co:"A",cap:"Monrovia",pop:"5 M",n:"Liberia",lang:"Inglés",cur:"Dólar liberiano",dom:".lr",area:"111,369 km²",peak:"Mount Wuteve (1,440 m)",f:"Liberia fue fundada en 1822 por esclavos liberados de Estados Unidos y es la república más antigua de África; su nombre significa 'tierra de los libres'."},
+  {c:"LY",co:"A",cap:"Trípoli",pop:"7 M",n:"Libia",lang:"Árabe",cur:"Dinar libio",dom:".ly",area:"1,759,541 km²",peak:"Bikku Bitti (2,267 m)",f:"Libia tiene las mayores reservas de petróleo de África, pero también el 90% de su territorio es desierto del Sahara, prácticamente despoblado."},
+  {c:"LI",co:"E",cap:"Vaduz",pop:"0.04 M",n:"Liechtenstein",lang:"Alemán",cur:"Franco suizo",dom:".li",area:"160 km²",peak:"Grauspitz (2,599 m)",f:"Liechtenstein es uno de los dos únicos países del mundo doblemente sin litoral (rodeado solo por países también sin costa), y tiene más empresas registradas que habitantes."},
+  {c:"LT",co:"E",cap:"Vilna",pop:"2.8 M",n:"Lituania",lang:"Lituano",cur:"Euro",dom:".lt",area:"65,300 km²",peak:"Aukštojas (294 m)",f:"Lituania fue el primer país soviético en declarar su independencia de la URSS, en 1990, iniciando el proceso que disolvió el bloque comunista."},
+  {c:"LU",co:"E",cap:"Luxemburgo",pop:"0.65 M",n:"Luxemburgo",lang:"Luxemburgués/Francés/Alemán",cur:"Euro",dom:".lu",area:"2,586 km²",peak:"Buurgplaatz (559 m)",f:"Luxemburgo tiene el mayor PIB per cápita de la Unión Europea y es sede de algunas de las instituciones más importantes del bloque, como el Tribunal de Justicia."},
+  {c:"MG",co:"A",cap:"Antananarivo",pop:"28 M",n:"Madagascar",lang:"Malgache / Francés",cur:"Ariary",dom:".mg",area:"587,041 km²",peak:"Maromokotro (2,876 m)",f:"Madagascar se separó de África hace 88 millones de años y el 90% de su fauna es única en el mundo, incluyendo más de 100 especies de lémures."},
+  {c:"MW",co:"A",cap:"Lilongüe",pop:"20 M",n:"Malaui",lang:"Chichewa / Inglés",cur:"Kwacha",dom:".mw",area:"118,484 km²",peak:"Sapitwa (3,002 m)",f:"Malaui es conocida como 'el corazón cálido de África' por la hospitalidad de su gente; el lago Malaui tiene más especies de peces que cualquier otro lago del mundo."},
+  {c:"MY",co:"As",cap:"Kuala Lumpur",pop:"33 M",n:"Malasia",lang:"Malayo",cur:"Ringgit",dom:".my",area:"329,847 km²",peak:"Monte Kinabalu (4,095 m)",f:"Malasia fue el primer país en construir las torres más altas del mundo: las Torres Petronas, que ostentaron ese título desde 1998 hasta 2004."},
+  {c:"MV",co:"As",cap:"Malé",pop:"0.5 M",n:"Maldivas",lang:"Divehi",cur:"Rufiyaa",dom:".mv",area:"298 km²",peak:"Unnamed (2.4 m)",f:"Maldivas es el país más plano y el más bajo del mundo, con una altitud máxima de 2.4 metros sobre el nivel del mar, haciéndolo muy vulnerable al cambio climático."},
+  {c:"ML",co:"A",cap:"Bamako",pop:"22 M",n:"Malí",lang:"Francés",cur:"Franco CFA",dom:".ml",area:"1,240,192 km²",peak:"Hombori Tondo (1,155 m)",f:"Malí alberga Tombuctú, una ciudad que fue el mayor centro de conocimiento islámico del siglo XV, con más de 25,000 estudiantes y miles de manuscritos."},
+  {c:"MT",co:"E",cap:"La Valeta",pop:"0.54 M",n:"Malta",lang:"Maltés / Inglés",cur:"Euro",dom:".mt",area:"316 km²",peak:"Ta' Dmejrek (253 m)",f:"Malta alberga los templos megalíticos más antiguos del mundo, construidos hace más de 5,500 años, anteriores a las pirámides de Egipto."},
+  {c:"MH",co:"O",cap:"Majuro",pop:"0.042 M",n:"Islas Marshall",lang:"Inglés / Marshalés",cur:"Dólar estadounidense",dom:".mh",area:"181 km²",peak:"Unnamed (10 m)",f:"Las Islas Marshall fueron el sitio de 67 pruebas nucleares estadounidenses entre 1946 y 1958; el atolón Bikini aún tiene niveles elevados de radiación."},
+  {c:"MR",co:"A",cap:"Nuakchot",pop:"4.6 M",n:"Mauritania",lang:"Árabe",cur:"Uguiya",dom:".mr",area:"1,030,700 km²",peak:"Kediet ej Jill (915 m)",f:"Mauritania fue uno de los últimos países del mundo en abolir legalmente la esclavitud, en 1981, aunque la práctica persistió de hecho hasta mucho después."},
+  {c:"MU",co:"A",cap:"Port Louis",pop:"1.3 M",n:"Mauricio",lang:"Inglés/Francés/Criollo",cur:"Rupia mauriciana",dom:".mu",area:"2,040 km²",peak:"Piton de la Petite Rivière Noire (828 m)",f:"Mauricio es hogar del extinto dodo, el ave incapaz de volar que desapareció apenas 80 años después de que los humanos llegaron a la isla en el siglo XVII."},
+  {c:"MX",co:"N",cap:"Ciudad de México",pop:"130 M",n:"México",lang:"Español",cur:"Peso mexicano",dom:".mx",area:"1,964,375 km²",peak:"Pico de Orizaba (5,636 m)",f:"México es el país hispanohablante más poblado del mundo y alberga la megalópolis más grande de América Latina: la Ciudad de México con más de 21 millones de habitantes."},
+  {c:"FM",co:"O",cap:"Palikir",pop:"0.115 M",n:"Micronesia",lang:"Inglés",cur:"Dólar estadounidense",dom:".fm",area:"702 km²",peak:"Dolohmwar (791 m)",f:"Micronesia está compuesta por más de 600 islas dispersas en 2.6 millones de km² del Pacífico, pero su superficie terrestre total es menor a la de Los Ángeles."},
+  {c:"MD",co:"E",cap:"Chisináu",pop:"2.6 M",n:"Moldavia",lang:"Rumano",cur:"Leu moldavo",dom:".md",area:"33,846 km²",peak:"Bălănești (429 m)",f:"Moldavia es el mayor productor de vino per cápita del mundo y tiene la bodega más grande del planeta, Cricova, con 120 km de túneles subterráneos."},
+  {c:"MC",co:"E",cap:"Mónaco",pop:"0.04 M",n:"Mónaco",lang:"Francés",cur:"Euro",dom:".mc",area:"2 km²",peak:"Mont Agel (140 m)",f:"Mónaco es el país más densamente poblado del mundo y el segundo más pequeño, con casi 20,000 habitantes por km² en apenas 2 km² de superficie."},
+  {c:"MN",co:"As",cap:"Ulán Bator",pop:"3.4 M",n:"Mongolia",lang:"Mongol",cur:"Tugrik",dom:".mn",area:"1,564,116 km²",peak:"Khüiten (4,374 m)",f:"Mongolia tiene la densidad de población más baja del mundo entre países grandes, con menos de 2 personas por kilómetro cuadrado en un territorio enorme."},
+  {c:"ME",co:"E",cap:"Podgorica",pop:"0.62 M",n:"Montenegro",lang:"Montenegrino",cur:"Euro",dom:".me",area:"13,812 km²",peak:"Zla Kolata (2,534 m)",f:"Montenegro tomó su nombre de la 'montaña negra' que da aspecto sombrío a sus picos en verano; su parque nacional Durmitor alberga un cañón más profundo que el Grand Canyon."},
+  {c:"MA",co:"A",cap:"Rabat",pop:"37 M",n:"Marruecos",lang:"Árabe / Bereber",cur:"Dírham marroquí",dom:".ma",area:"710,850 km²",peak:"Toubkal (4,167 m)",f:"Marruecos alberga la universidad más antigua del mundo en continuo funcionamiento: la Universidad de Al Quaraouiyine, fundada en el año 859 d.C."},
+  {c:"MZ",co:"A",cap:"Maputo",pop:"33 M",n:"Mozambique",lang:"Portugués",cur:"Metical",dom:".mz",area:"801,590 km²",peak:"Monte Binga (2,436 m)",f:"Mozambique tiene la bandera más singular del mundo: es el único país cuya bandera incluye un arma moderna, el fusil de asalto AK-47."},
+  {c:"MM",co:"As",cap:"Naipyidó",pop:"55 M",n:"Myanmar",lang:"Birmano",cur:"Kyat",dom:".mm",area:"676,578 km²",peak:"Hkakabo Razi (5,881 m)",f:"Myanmar tiene más de 2,000 pagodas budistas y templos solo en la llanura de Bagan, lo que lo convierte en uno de los sitios arqueológicos más densos del mundo."},
+  {c:"NA",co:"A",cap:"Windhoek",pop:"2.6 M",n:"Namibia",lang:"Inglés / Afrikáans",cur:"Dólar namibio",dom:".na",area:"824,292 km²",peak:"König-Wilhelm-Berg (2,606 m)",f:"Namibia tiene el desierto costero más antiguo del mundo, el Namib, con dunas que alcanzan 300 metros de altura, las más grandes del planeta."},
+  {c:"NR",co:"O",cap:"Yaren",pop:"0.01 M",n:"Nauru",lang:"Nauruano / Inglés",cur:"Dólar australiano",dom:".nr",area:"21 km²",peak:"Command Ridge (71 m)",f:"Nauru es el país más pequeño del mundo sin capital oficial y la única nación-isla del mundo que no tiene capital designada formalmente."},
+  {c:"NP",co:"As",cap:"Katmandú",pop:"30 M",n:"Nepal",lang:"Nepalés",cur:"Rupia nepalesa",dom:".np",area:"147,181 km²",peak:"Everest (8,848 m)",f:"Nepal alberga ocho de las diez montañas más altas del mundo, incluyendo el Everest, la cumbre más alta del planeta con 8,848 metros."},
+  {c:"NL",co:"E",cap:"Ámsterdam",pop:"17.9 M",n:"Países Bajos",lang:"Neerlandés",cur:"Euro",dom:".nl",area:"41,543 km²",peak:"Vaalserberg (323 m)",f:"Países Bajos tiene más bicicletas que habitantes: 23 millones de bicicletas para 17 millones de personas, con más de 35,000 km de ciclovías."},
+  {c:"NZ",co:"O",cap:"Wellington",pop:"5.1 M",n:"Nueva Zelanda",lang:"Inglés / Maorí",cur:"Dólar neozelandés",dom:".nz",area:"268,838 km²",peak:"Aoraki/Monte Cook (3,724 m)",f:"Nueva Zelanda fue el primer país del mundo en conceder el voto a las mujeres, en 1893, adelantándose décadas a la mayoría de las naciones."},
+  {c:"NI",co:"N",cap:"Managua",pop:"7 M",n:"Nicaragua",lang:"Español",cur:"Córdoba",dom:".ni",area:"130,373 km²",peak:"Mogotón (2,438 m)",f:"Nicaragua tiene el lago más grande de Centroamérica, el lago Nicaragua, y es el único lago del mundo con tiburones de agua dulce que llegaron desde el mar."},
+  {c:"NE",co:"A",cap:"Niamey",pop:"26 M",n:"Níger",lang:"Francés",cur:"Franco CFA",dom:".ne",area:"1,267,000 km²",peak:"Idoukal-n-Taghès (2,022 m)",f:"Níger es el mayor país de África occidental por superficie y tiene la pirámide de edad más joven del mundo, con una edad mediana de solo 15 años."},
+  {c:"NG",co:"A",cap:"Abuya",pop:"220 M",n:"Nigeria",lang:"Inglés",cur:"Naira",dom:".ng",area:"923,768 km²",peak:"Chappal Waddi (2,419 m)",f:"Nigeria es el país más poblado de África con más de 220 millones de habitantes, y su industria cinematográfica 'Nollywood' es la segunda más prolífica del mundo."},
+  {c:"MK",co:"E",cap:"Skopie",pop:"2 M",n:"Macedonia del Norte",lang:"Macedonio / Albanés",cur:"Denar",dom:".mk",area:"25,713 km²",peak:"Monte Korab (2,764 m)",f:"Macedonia del Norte es el país que cambió su nombre más recientemente por un conflicto diplomático: en 2019 pasó de ser solo 'Macedonia' para resolver una disputa con Grecia."},
+  {c:"NO",co:"E",cap:"Oslo",pop:"5.4 M",n:"Noruega",lang:"Noruego",cur:"Corona noruega",dom:".no",area:"385,207 km²",peak:"Galdhøpiggen (2,469 m)",f:"Noruega tiene el mayor fondo soberano de riqueza del mundo, con más de 1.4 billones de dólares ahorrados gracias a sus ingresos petroleros."},
+  {c:"OM",co:"As",cap:"Mascate",pop:"4.5 M",n:"Omán",lang:"Árabe",cur:"Rial omaní",dom:".om",area:"309,500 km²",peak:"Jabal Shams (3,009 m)",f:"Omán tiene la historia ininterrumpida de producción de incienso más larga del mundo: lleva más de 5,000 años exportando olíbano a Oriente Medio y Europa."},
+  {c:"PK",co:"As",cap:"Islamabad",pop:"230 M",n:"Pakistán",lang:"Urdu / Inglés",cur:"Rupia pakistaní",dom:".pk",area:"881,913 km²",peak:"K2 (8,611 m)",f:"Pakistán alberga el K2, la segunda montaña más alta del mundo con 8,611 metros, considerada más difícil y peligrosa de escalar que el Everest."},
+  {c:"PW",co:"O",cap:"Ngerulmud",pop:"0.018 M",n:"Palaos",lang:"Palauano / Inglés",cur:"Dólar estadounidense",dom:".pw",area:"459 km²",peak:"Mount Ngerchelchauus (242 m)",f:"Palaos fue el primer país del mundo en declarar un santuario marino nacional, prohibiendo toda pesca comercial en sus aguas en 2015."},
+  {c:"PA",co:"N",cap:"Ciudad de Panamá",pop:"4.4 M",n:"Panamá",lang:"Español",cur:"Balboa / Dólar",dom:".pa",area:"75,417 km²",peak:"Volcán Barú (3,478 m)",f:"El Canal de Panamá es una de las mayores obras de ingeniería de la historia; por él transita el 5% del comercio marítimo mundial."},
+  {c:"PG",co:"O",cap:"Port Moresby",pop:"10 M",n:"Papúa Nueva Guinea",lang:"Inglés/Tok Pisin/Hiri Motu",cur:"Kina",dom:".pg",area:"462,840 km²",peak:"Mount Wilhelm (4,509 m)",f:"Papúa Nueva Guinea es el país más diverso lingüísticamente del mundo, con más de 840 idiomas distintos, representando el 12% de todos los idiomas del planeta."},
+  {c:"PY",co:"S",cap:"Asunción",pop:"7.4 M",n:"Paraguay",lang:"Español / Guaraní",cur:"Guaraní",dom:".py",area:"406,752 km²",peak:"Cerro Peró (842 m)",f:"Paraguay es el mayor productor mundial de energía hidroeléctrica per cápita: exporta el 90% de la electricidad que genera desde la represa de Itaipú."},
+  {c:"PE",co:"S",cap:"Lima",pop:"33 M",n:"Perú",lang:"Español/Quechua/Aimara",cur:"Sol",dom:".pe",area:"1,285,216 km²",peak:"Huascarán (6,768 m)",f:"Perú alberga Machu Picchu, la ciudad inca en las nubes, y también tiene la segunda mayor biodiversidad del mundo después de Brasil."},
+  {c:"PH",co:"As",cap:"Manila",pop:"115 M",n:"Filipinas",lang:"Filipino / Inglés",cur:"Peso filipino",dom:".ph",area:"300,000 km²",peak:"Monte Apo (2,954 m)",f:"Filipinas es el único país de Asia donde el catolicismo es la religión mayoritaria, con más del 80% de su población profesando esta fe."},
+  {c:"PL",co:"E",cap:"Varsovia",pop:"38 M",n:"Polonia",lang:"Polaco",cur:"Esloti",dom:".pl",area:"312,679 km²",peak:"Rysy (2,499 m)",f:"Polonia fue el primer país del mundo en adoptar una constitución escrita en mayo de 1791, apenas meses después de la de Estados Unidos."},
+  {c:"PT",co:"E",cap:"Lisboa",pop:"10.3 M",n:"Portugal",lang:"Portugués",cur:"Euro",dom:".pt",area:"92,212 km²",peak:"Ponta do Pico (2,351 m)",f:"Portugal es la nación más antigua de Europa occidental: sus fronteras casi no han cambiado desde 1139, cuando fue reconocida como reino independiente."},
+  {c:"QA",co:"As",cap:"Doha",pop:"2.9 M",n:"Catar",lang:"Árabe",cur:"Rial catarí",dom:".qa",area:"11,581 km²",peak:"Qurayn Abu al Bawl (103 m)",f:"Catar tiene el mayor PIB per cápita del mundo y es el mayor exportador de gas natural licuado del planeta, transformando su economía en pocas décadas."},
+  {c:"RO",co:"E",cap:"Bucarest",pop:"19 M",n:"Rumania",lang:"Rumano",cur:"Leu rumano",dom:".ro",area:"238,397 km²",peak:"Moldoveanu (2,544 m)",f:"Rumania alberga la región de Transilvania, cuna de la leyenda del vampiro Drácula, inspirada en el príncipe histórico Vlad el Empalador del siglo XV."},
+  {c:"RU",co:"E",cap:"Moscú",pop:"144 M",n:"Rusia",lang:"Ruso",cur:"Rublo",dom:".ru",area:"17,098,242 km²",peak:"Elbrus (5,642 m)",f:"Rusia es el país más grande del mundo con 17.1 millones de km², ocupando el 11% de la superficie terrestre del planeta y abarcando 11 zonas horarias."},
+  {c:"RW",co:"A",cap:"Kigali",pop:"14 M",n:"Ruanda",lang:"Kinyarwanda/Francés/Inglés",cur:"Franco ruandés",dom:".rw",area:"26,338 km²",peak:"Karisimbi (4,507 m)",f:"Ruanda tiene la mayor proporción de mujeres en el parlamento del mundo, superando el 60%, y es uno de los países con mayor tasa de crecimiento económico de África."},
+  {c:"KN",co:"N",cap:"Basseterre",pop:"0.05 M",n:"San Cristóbal y Nieves",lang:"Inglés",cur:"Dólar Caribe Oriental",dom:".kn",area:"261 km²",peak:"Mount Liamuiga (1,156 m)",f:"San Cristóbal y Nieves es la federación independiente más pequeña del hemisferio occidental y la primera colonia del Caribe establecida por los ingleses en 1623."},
+  {c:"LC",co:"N",cap:"Castries",pop:"0.18 M",n:"Santa Lucía",lang:"Inglés",cur:"Dólar Caribe Oriental",dom:".lc",area:"616 km²",peak:"Mont Gimie (950 m)",f:"Santa Lucía es el único país del mundo que lleva el nombre de una mujer, la mártir cristiana Santa Lucía de Siracusa."},
+  {c:"VC",co:"N",cap:"Kingstown",pop:"0.11 M",n:"San Vicente y Granadinas",lang:"Inglés",cur:"Dólar Caribe Oriental",dom:".vc",area:"389 km²",peak:"Soufrière (1,234 m)",f:"San Vicente y Granadinas tiene la única población de pericos amazónicos imperiales del mundo, ave que es símbolo nacional."},
+  {c:"WS",co:"O",cap:"Apia",pop:"0.22 M",n:"Samoa",lang:"Samoano / Inglés",cur:"Tālā",dom:".ws",area:"2,842 km²",peak:"Silisili (1,858 m)",f:"Samoa es el primer país en ver cada nuevo año nuevo, al ubicarse justo al oeste de la Línea Internacional de Cambio de Fecha en el Pacífico."},
+  {c:"SM",co:"E",cap:"San Marino",pop:"0.034 M",n:"San Marino",lang:"Italiano",cur:"Euro",dom:".sm",area:"61 km²",peak:"Monte Titano (755 m)",f:"San Marino es el Estado soberano más pequeño y el más antiguo del mundo, fundado en el año 301 d.C. por el cantero cristiano Marinus de Rab."},
+  {c:"ST",co:"A",cap:"Santo Tomé",pop:"0.2 M",n:"Santo Tomé y Príncipe",lang:"Portugués",cur:"Dobra",dom:".st",area:"1,001 km²",peak:"Pico de São Tomé (2,024 m)",f:"Santo Tomé y Príncipe fue el primer país africano en realizar elecciones multipartidistas tras la era colonial y está casi exactamente en el centro geográfico del mundo."},
+  {c:"SA",co:"As",cap:"Riad",pop:"36 M",n:"Arabia Saudí",lang:"Árabe",cur:"Riyal saudí",dom:".sa",area:"2,149,690 km²",peak:"Jabal Sawda (3,133 m)",f:"Arabia Saudí alberga La Meca y Medina, las dos ciudades más sagradas del islam, a las que acuden millones de peregrinos cada año en el Hajj."},
+  {c:"SN",co:"A",cap:"Dakar",pop:"17 M",n:"Senegal",lang:"Francés",cur:"Franco CFA",dom:".sn",area:"196,722 km²",peak:"Unnamed hill (648 m)",f:"Senegal es conocida como la 'tierra de la Teranga', que significa hospitalidad en wolof, y es un referente de estabilidad democrática en África occidental."},
+  {c:"RS",co:"E",cap:"Belgrado",pop:"6.8 M",n:"Serbia",lang:"Serbio",cur:"Dinar serbio",dom:".rs",area:"77,474 km²",peak:"Midzor (2,169 m)",f:"Serbia es la cuna de Nikola Tesla, uno de los inventores más influyentes de la historia, cuyo legado en la electricidad alterna cambió el mundo."},
+  {c:"SC",co:"A",cap:"Victoria",pop:"0.1 M",n:"Seychelles",lang:"Inglés/Francés/Criollo",cur:"Rupia de Seychelles",dom:".sc",area:"459 km²",peak:"Morne Seychellois (905 m)",f:"Seychelles alberga la semilla más grande del mundo, la coco de mer, que puede pesar hasta 25 kg y solo crece en dos islas del archipiélago."},
+  {c:"SL",co:"A",cap:"Freetown",pop:"8 M",n:"Sierra Leona",lang:"Inglés / Krio",cur:"Leone",dom:".sl",area:"71,740 km²",peak:"Bintumani (1,948 m)",f:"Sierra Leona tiene el puerto natural más grande de África occidental y fue fundada como hogar para esclavos liberados por los británicos en 1787."},
+  {c:"SG",co:"As",cap:"Singapur",pop:"6 M",n:"Singapur",lang:"Inglés/Malayo/Chino/Tamil",cur:"Dólar de Singapur",dom:".sg",area:"728 km²",peak:"Bukit Timah (163 m)",f:"Singapur pasó de ser un puerto colonial a uno de los países más ricos del mundo en menos de 50 años, con el segundo aeropuerto más conectado del planeta."},
+  {c:"SK",co:"E",cap:"Bratislava",pop:"5.5 M",n:"Eslovaquia",lang:"Eslovaco",cur:"Euro",dom:".sk",area:"49,035 km²",peak:"Gerlachovský štít (2,655 m)",f:"Eslovaquia tiene más castillos por kilómetro cuadrado que cualquier otro país del mundo, con más de 180 castillos y ruinas en un territorio relativamente pequeño."},
+  {c:"SI",co:"E",cap:"Liubliana",pop:"2.1 M",n:"Eslovenia",lang:"Esloveno",cur:"Euro",dom:".si",area:"20,273 km²",peak:"Monte Triglav (2,864 m)",f:"Eslovenia tiene el 60% de su territorio cubierto de bosques, siendo uno de los países más verdes de Europa, y alberga la cueva de Postojna, una de las mayores del mundo."},
+  {c:"SB",co:"O",cap:"Honiara",pop:"0.72 M",n:"Islas Salomón",lang:"Inglés",cur:"Dólar Islas Salomón",dom:".sb",area:"28,896 km²",peak:"Makarakomburu (2,310 m)",f:"Las Islas Salomón tienen uno de los arrecifes de coral más biodiversos del Pacífico y más de 70 idiomas distintos en una población de apenas 700,000 personas."},
+  {c:"SO",co:"A",cap:"Mogadiscio",pop:"18 M",n:"Somalia",lang:"Somalí / Árabe",cur:"Chelín somalí",dom:".so",area:"637,657 km²",peak:"Shimbiris (2,416 m)",f:"Somalia tiene la costa más larga de África continental con más de 3,300 km, y su cultura de marineros y comerciantes data de hace más de 2,000 años."},
+  {c:"ZA",co:"A",cap:"Pretoria",pop:"60 M",n:"Sudáfrica",lang:"11 idiomas oficiales",cur:"Rand",dom:".za",area:"1,219,090 km²",peak:"Mafadi (3,450 m)",f:"Sudáfrica es el único país del mundo que ha desmantelado voluntariamente su arsenal nuclear, destruyendo sus seis bombas atómicas en 1989."},
+  {c:"SS",co:"A",cap:"Yuba",pop:"11 M",n:"Sudán del Sur",lang:"Inglés / Árabe",cur:"Libra de Sudán del Sur",dom:".ss",area:"644,329 km²",peak:"Kinyeti (3,187 m)",f:"Sudán del Sur es el país más joven del mundo, independizado de Sudán en 2011 tras décadas de guerra civil, y el Nilo Blanco nace en su territorio."},
+  {c:"ES",co:"E",cap:"Madrid",pop:"47 M",n:"España",lang:"Español",cur:"Euro",dom:".es",area:"505,990 km²",peak:"Teide (3,718 m)",f:"España es el segundo país más visitado del mundo y tiene el idioma con la segunda mayor comunidad de hablantes nativos: más de 500 millones de hispanohablantes."},
+  {c:"LK",co:"As",cap:"Sri Jayawardenepura",pop:"22 M",n:"Sri Lanka",lang:"Cingalés / Tamil",cur:"Rupia de Sri Lanka",dom:".lk",area:"65,610 km²",peak:"Pidurutalagala (2,524 m)",f:"Sri Lanka es el mayor productor mundial de té de Ceilán y la isla tiene la primera mención documentada del juego de ajedrez, en el siglo VI d.C."},
+  {c:"SD",co:"A",cap:"Jartum",pop:"46 M",n:"Sudán",lang:"Árabe / Inglés",cur:"Libra sudanesa",dom:".sd",area:"1,861,484 km²",peak:"Jebel Marra (3,042 m)",f:"Sudán tiene más pirámides antiguas que Egipto, con más de 200 pirámides nubias en el desierto, aunque son menos conocidas y más estrechas que las egipcias."},
+  {c:"SR",co:"S",cap:"Paramaribo",pop:"0.6 M",n:"Surinam",lang:"Neerlandés",cur:"Dólar de Surinam",dom:".sr",area:"163,820 km²",peak:"Juliana Top (1,230 m)",f:"Surinam es el país más pequeño de Sudamérica y el único donde el holandés es idioma oficial fuera de Europa, herencia de la colonización neerlandesa."},
+  {c:"SE",co:"E",cap:"Estocolmo",pop:"10.5 M",n:"Suecia",lang:"Sueco",cur:"Corona sueca",dom:".se",area:"450,295 km²",peak:"Kebnekaise (2,104 m)",f:"Suecia es inventora del dinamol, el marcapasos, el cinturón de seguridad moderno, Skype, Spotify y muchas otras innovaciones que cambiaron el mundo."},
+  {c:"CH",co:"E",cap:"Berna",pop:"8.7 M",n:"Suiza",lang:"Alemán/Francés/Italiano/Romanche",cur:"Franco suizo",dom:".ch",area:"41,285 km²",peak:"Dufourspitze (4,634 m)",f:"Suiza lleva más de 500 años sin estar en guerra con ningún país, siendo el símbolo mundial de la neutralidad y sede de organismos internacionales clave."},
+  {c:"SY",co:"As",cap:"Damasco",pop:"21 M",n:"Siria",lang:"Árabe",cur:"Libra siria",dom:".sy",area:"185,180 km²",peak:"Monte Hermón (2,814 m)",f:"Siria alberga Damasco, la capital habitada de forma continua más antigua del mundo, con evidencias de asentamiento desde el 9000 a.C."},
+  {c:"TW",co:"As",cap:"Taipéi",pop:"23 M",n:"Taiwán",lang:"Chino mandarín",cur:"Nuevo dólar taiwanés",dom:".tw",area:"35,980 km²",peak:"Jade Mountain (3,952 m)",f:"Taiwán es líder mundial en manufactura de semiconductores avanzados: la empresa TSMC produce el 90% de los chips más avanzados del planeta."},
+  {c:"TJ",co:"As",cap:"Dusambé",pop:"10 M",n:"Tayikistán",lang:"Tayiko",cur:"Somoni",dom:".tj",area:"143,100 km²",peak:"Ismoil Somoni (7,495 m)",f:"Tayikistán es el país más montañoso del mundo en proporción a su superficie, con el 93% de su territorio por encima de los 1,000 metros de altitud."},
+  {c:"TZ",co:"A",cap:"Dodoma",pop:"63 M",n:"Tanzania",lang:"Suajili / Inglés",cur:"Chelín tanzano",dom:".tz",area:"945,087 km²",peak:"Kilimanjaro (5,895 m)",f:"Tanzania alberga el Serengeti y el Kilimanjaro, la montaña más alta de África con 5,895 metros, y el lago Tanganica, el segundo más profundo del mundo."},
+  {c:"TH",co:"As",cap:"Bangkok",pop:"71 M",n:"Tailandia",lang:"Tailandés",cur:"Baht",dom:".th",area:"513,120 km²",peak:"Doi Inthanon (2,565 m)",f:"Tailandia es el único país del Sudeste Asiático que nunca fue colonizado por potencias europeas, lo que se refleja en la riqueza de su cultura nativa."},
+  {c:"TL",co:"As",cap:"Dili",pop:"1.3 M",n:"Timor Oriental",lang:"Tetun / Portugués",cur:"Dólar estadounidense",dom:".tl",area:"14,874 km²",peak:"Tatamailau (2,963 m)",f:"Timor Oriental es uno de los países más jóvenes del mundo, independizado en 2002, y tiene una de las tasas de mortalidad infantil más altas de Asia."},
+  {c:"TG",co:"A",cap:"Lomé",pop:"9 M",n:"Togo",lang:"Francés",cur:"Franco CFA",dom:".tg",area:"56,785 km²",peak:"Mont Agou (986 m)",f:"Togo es famosa por el mercado de los fetiches de Lomé, el más grande de África occidental, donde se venden ingredientes para rituales del vudú."},
+  {c:"TO",co:"O",cap:"Nukualofa",pop:"0.1 M",n:"Tonga",lang:"Tongano / Inglés",cur:"Paʻanga",dom:".to",area:"747 km²",peak:"Kao (1,033 m)",f:"Tonga es el único reino monárquico del Pacífico que nunca perdió su soberanía frente a las potencias coloniales europeas durante la época imperial."},
+  {c:"TT",co:"N",cap:"Puerto España",pop:"1.4 M",n:"Trinidad y Tobago",lang:"Inglés",cur:"Dólar de Trinidad y Tobago",dom:".tt",area:"5,128 km²",peak:"El Cerro del Aripo (940 m)",f:"Trinidad y Tobago fue el lugar de nacimiento del calipso, el steel drum y el carnaval de mayor tradición del Caribe anglófono."},
+  {c:"TN",co:"A",cap:"Túnez",pop:"12 M",n:"Túnez",lang:"Árabe",cur:"Dinar tunecino",dom:".tn",area:"163,610 km²",peak:"Jebel ech Chambi (1,544 m)",f:"Túnez alberga El Djem, el coliseo romano mejor conservado fuera de Italia, con capacidad para 35,000 espectadores en el desierto norteafricano."},
+  {c:"TR",co:"As",cap:"Ankara",pop:"85 M",n:"Turquía",lang:"Turco",cur:"Lira turca",dom:".tr",area:"783,562 km²",peak:"Monte Ararat (5,137 m)",f:"Turquía es el único país cuya superficie se extiende en dos continentes: la mayor parte está en Asia (Anatolia) y el noroeste en Europa (Tracia)."},
+  {c:"TM",co:"As",cap:"Asjabad",pop:"6 M",n:"Turkmenistán",lang:"Turcomano",cur:"Manat turcomano",dom:".tm",area:"488,100 km²",peak:"Ayrybaba (3,139 m)",f:"Turkmenistán tiene un cráter de gas en llamas conocido como 'La Puerta del Infierno' que ha ardido sin parar desde 1971, cuando se incendió durante una perforación."},
+  {c:"TV",co:"O",cap:"Funafuti",pop:"0.011 M",n:"Tuvalu",lang:"Tuvaluano / Inglés",cur:"Dólar australiano",dom:".tv",area:"26 km²",peak:"Unnamed (5 m)",f:"Tuvalu es el cuarto país más pequeño del mundo y vende su dominio de internet '.tv' a cadenas de televisión, generando gran parte de sus ingresos."},
+  {c:"UG",co:"A",cap:"Kampala",pop:"48 M",n:"Uganda",lang:"Inglés / Suajili",cur:"Chelín ugandés",dom:".ug",area:"241,038 km²",peak:"Margherita Peak (5,109 m)",f:"Uganda es el país más joven de África por demografía, con la mitad de su población menor de 15 años, y alberga el 50% de los gorilas de montaña del mundo."},
+  {c:"UA",co:"E",cap:"Kiev",pop:"43 M",n:"Ucrania",lang:"Ucraniano",cur:"Grivna",dom:".ua",area:"603,550 km²",peak:"Hoverla (2,061 m)",f:"Ucrania tiene las tierras agrícolas más fértiles de Europa, el 'chernozem' o tierra negra, y era conocida como el 'granero de Europa' antes del conflicto actual."},
+  {c:"AE",co:"As",cap:"Abu Dabi",pop:"10 M",n:"Emiratos Árabes Unidos",lang:"Árabe",cur:"Dírham de los EAU",dom:".ae",area:"83,600 km²",peak:"Jebel Jais (1,934 m)",f:"Los Emiratos Árabes Unidos pasaron de no tener casi nada en 1971 a construir en 50 años el edificio más alto del mundo, el Burj Khalifa, y un aeropuerto de tráfico global."},
+  {c:"GB",co:"E",cap:"Londres",pop:"67 M",n:"Reino Unido",lang:"Inglés",cur:"Libra esterlina",dom:".uk",area:"243,610 km²",peak:"Ben Nevis (1,345 m)",f:"El Reino Unido es la cuna de la Revolución Industrial, el fútbol moderno, el Parlamento democrático y la World Wide Web, inventada por Tim Berners-Lee en 1989."},
+  {c:"US",co:"N",cap:"Washington D.C.",pop:"335 M",n:"Estados Unidos",lang:"Inglés",cur:"Dólar estadounidense",dom:".us",area:"9,833,517 km²",peak:"Denali (6,190 m)",f:"Estados Unidos tiene la economía más grande del mundo y ha enviado a los únicos seres humanos que han pisado la Luna, en el programa Apollo entre 1969 y 1972."},
+  {c:"UY",co:"S",cap:"Montevideo",pop:"3.5 M",n:"Uruguay",lang:"Español",cur:"Peso uruguayo",dom:".uy",area:"176,215 km²",peak:"Cerro Catedral (514 m)",f:"Uruguay fue el primer país de América Latina en legalizar el matrimonio igualitario, el aborto y la marihuana; es considerado el más progresista de la región."},
+  {c:"UZ",co:"As",cap:"Taskent",pop:"36 M",n:"Uzbekistán",lang:"Uzbeko",cur:"Som uzbeko",dom:".uz",area:"447,400 km²",peak:"Khazret Sultan (4,643 m)",f:"Uzbekistán alberga Samarcanda, una de las ciudades más antiguas y hermosas de Asia Central, que fue el corazón de la Ruta de la Seda durante siglos."},
+  {c:"VU",co:"O",cap:"Port Vila",pop:"0.33 M",n:"Vanuatu",lang:"Inglés/Francés/Bislama",cur:"Vatu",dom:".vu",area:"12,189 km²",peak:"Tabwemasana (1,877 m)",f:"Vanuatu es considerado el país más feliz del mundo según varios índices de bienestar ecológico, y tiene más idiomas por habitante que ningún otro."},
+  {c:"VA",co:"E",cap:"Ciudad del Vaticano",pop:"0.0008 M",n:"Ciudad del Vaticano",lang:"Italiano / Latín",cur:"Euro",dom:".va",area:"0.44 km²",peak:"—",f:"Ciudad del Vaticano es el país más pequeño del mundo con 0.44 km², pero tiene la mayor concentración de arte por metro cuadrado de cualquier lugar del planeta."},
+  {c:"VE",co:"S",cap:"Caracas",pop:"29 M",n:"Venezuela",lang:"Español",cur:"Bolívar",dom:".ve",area:"916,445 km²",peak:"Pico Bolívar (4,978 m)",f:"Venezuela tiene las mayores reservas de petróleo del mundo certificadas, superando a Arabia Saudí, aunque su extracción ha caído drásticamente en la última década."},
+  {c:"VN",co:"As",cap:"Hanói",pop:"98 M",n:"Vietnam",lang:"Vietnamita",cur:"Dong",dom:".vn",area:"331,212 km²",peak:"Fansipan (3,143 m)",f:"Vietnam tiene 3,260 km de costa y exporta más café que ningún otro país excepto Brasil; es el mayor productor mundial de café robusta."},
+  {c:"YE",co:"As",cap:"Saná",pop:"33 M",n:"Yemen",lang:"Árabe",cur:"Rial yemení",dom:".ye",area:"527,968 km²",peak:"Jabal an Nabi Shu'ayb (3,666 m)",f:"Yemen alberga la isla de Socotra, llamada las 'Galápagos del Océano Índico' por su fauna única, incluyendo el árbol dragón de sangre con forma de paraguas."},
+  {c:"ZM",co:"A",cap:"Lusaka",pop:"19 M",n:"Zambia",lang:"Inglés",cur:"Kwacha zambiano",dom:".zm",area:"752,618 km²",peak:"Mafinga Hills (2,301 m)",f:"Zambia alberga las Cataratas Victoria, las más grandes del mundo por caudal y anchura combinados; los locales las llaman 'Mosi-oa-Tunya', el humo que truena."},
+  {c:"ZW",co:"A",cap:"Harare",pop:"16 M",n:"Zimbabue",lang:"16 idiomas oficiales",cur:"Dólar zimbabuense",dom:".zw",area:"390,757 km²",peak:"Nyangani (2,592 m)",f:"Zimbabue vivió la segunda inflación más alta de la historia en 2008, llegando a billones por ciento; emitió billetes de 100 billones de dólares zimbabuenses."},
+  {c:"PS",co:"As",cap:"Ramala",pop:"5.3 M",n:"Palestina",lang:"Árabe",cur:"Séquel / Dinar jordano",dom:".ps",area:"6,220 km²",peak:"Jabal Abu Ghaneim (1,011 m)",f:"Palestina alberga Jericó, considerada la ciudad habitada de forma continua más antigua del mundo, con asentamientos que datan de hace más de 10,000 años."},
+  {c:"XK",co:"E",cap:"Pristina",pop:"1.8 M",n:"Kosovo",lang:"Albanés / Serbio",cur:"Euro",dom:".xk",area:"10,887 km²",peak:"Gjeravica (2,656 m)",f:"Kosovo es el país más joven de Europa, declaró su independencia de Serbia en 2008 y es reconocido por más de 100 países, aunque no tiene asiento en la ONU."},
+];
+
+const CONT_LABELS = {all:"Todos los países",A:"África",N:"N. América",S:"S. América",As:"Asia",E:"Europa",O:"Oceanía"};
+const CONT_COUNTS = {all:196,A:53,N:23,S:12,As:48,E:46,O:14};
+
+// ── LocalStorage ──────────────────────────────────────────────────────────────
+function loadStats() {
+  try { return JSON.parse(localStorage.getItem('fq_stats') || '{}'); } catch { return {}; }
+}
+function saveStats(s) {
+  try { localStorage.setItem('fq_stats', JSON.stringify(s)); } catch {}
+}
+function loadRecords() {
+  try { return JSON.parse(localStorage.getItem('fq_records') || '{"bestStreak":0,"totalCorrect":0,"totalAnswered":0}'); } catch { return {bestStreak:0,totalCorrect:0,totalAnswered:0}; }
+}
+function saveRecords(r) {
+  try { localStorage.setItem('fq_records', JSON.stringify(r)); } catch {}
+}
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let mode = 'flash'; // 'flash' | 'test' | 'timer' | 'marathon'
+let activeCont = 'all';
+let deck = [], idx = 0, maxIdx = 0;
+let flipped = false, transitioning = false;
+let score = {correct:0, wrong:0, streak:0};
+let mcAnswers = [], mcCorrect = -1, mcAnswered = false;
+let globalStats = loadStats();
+let records = loadRecords();
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function shuffle(a) {
+  const b = [...a];
+  for (let i = b.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [b[i],b[j]] = [b[j],b[i]];
+  }
+  return b;
+}
+function setFlag(id, code) {
+  const el = document.getElementById(id);
+  const size = el.dataset.size === 'lg' ? '320' : '80';
+  el.src = 'https://flagcdn.com/w' + size + '/' + code.toLowerCase() + '.png';
+  el.alt = code;
+}
+function getPool() {
+  return activeCont === 'all' ? [...COUNTRIES] : COUNTRIES.filter(c => c.co === activeCont);
+}
+function isReviewing() { return mode === 'flash' && idx < maxIdx; }
+
+// ── Mode ──────────────────────────────────────────────────────────────────────
+function setMode(m) {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  mode = m;
+  ['flash','test','timer','marathon'].forEach(id => {
+    document.getElementById('mode-'+id).classList.toggle('active', id === m);
+  });
+  document.getElementById('flash-nav').style.display     = m === 'flash' || m === 'marathon' ? '' : 'none';
+  document.getElementById('mc-options').style.display    = m === 'test' || m === 'timer' ? 'grid' : 'none';
+  document.getElementById('tap-hint').style.display      = m === 'flash' || m === 'marathon' ? '' : 'none';
+  document.getElementById('scene').style.cursor          = m === 'flash' || m === 'marathon' ? 'pointer' : 'default';
+  document.getElementById('timer-wrap').style.display    = m === 'timer' ? 'block' : 'none';
+  document.getElementById('marathon-wrap').style.display = m === 'marathon' ? 'block' : 'none';
+  document.getElementById('end-screen').style.display    = 'none';
+  document.getElementById('card').style.display          = '';
+  document.getElementById('btn-next').classList.remove('show');
+  // Reset
+  deck = shuffle(getPool()); idx = 0; maxIdx = 0;
+  flipped = false; transitioning = false;
+  score = {correct:0, wrong:0, streak:0};
+  marathonWrong = [];
+  document.getElementById('card').classList.remove('flipped');
+  if (m === 'timer') startTimer();
+  render(); updateScore();
+}
+
+// ── Continent ─────────────────────────────────────────────────────────────────
+function setCont(btn) {
+  document.querySelectorAll('.cont-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activeCont = btn.dataset.co;
+  deck = shuffle(getPool());
+  idx = 0; maxIdx = 0; flipped = false; transitioning = false;
+  score = {correct:0, wrong:0, streak:0};
+  document.getElementById('card').classList.remove('flipped');
+  document.getElementById('btn-next').classList.remove('show');
+  render(); updateScore();
+  document.getElementById('prog-label').textContent = CONT_LABELS[activeCont] || 'Todos';
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render() {
+  const co = deck[idx];
+  setFlag('flag-front', co.c);
+  setFlag('flag-back',  co.c);
+  document.getElementById('country-name').textContent = co.n;
+  document.getElementById('meta-cap').textContent  = co.cap  || '—';
+  document.getElementById('meta-pop').textContent  = (co.pop || '—') + ' hab.';
+  document.getElementById('meta-lang').textContent = co.lang || '—';
+  document.getElementById('meta-cur').textContent  = co.cur  || '—';
+  document.getElementById('meta-dom').textContent  = co.dom  || '—';
+  document.getElementById('meta-area').textContent = co.area || '—';
+  document.getElementById('meta-peak').textContent = co.peak || '—';
+  document.getElementById('fact-text').textContent = co.f || '';
+  document.getElementById('prog-cur').textContent  = idx;
+  document.getElementById('prog-tot').textContent  = deck.length;
+  document.getElementById('prog-fill').style.width = (idx/deck.length*100) + '%';
+  document.getElementById('footer').textContent    = `${deck.length-idx} cartas restantes`;
+  document.getElementById('reviewing-badge').classList.toggle('show', isReviewing());
+
+  if (isReviewing()) {
+    document.getElementById('card').classList.add('flipped');
+  } else {
+    document.getElementById('card').classList.remove('flipped');
+    flipped = false;
+  }
+
+  if (mode === 'test' || mode === 'timer') renderMC();
+  setButtons();
+  updateMastery();
+}
+
+// ── Multiple choice ───────────────────────────────────────────────────────────
+function renderMC() {
+  mcAnswered = false;
+  const correct = deck[idx];
+  const pool = COUNTRIES.filter(c => c.c !== correct.c);
+  const wrong = shuffle(pool).slice(0, 3);
+  const opts = shuffle([correct, ...wrong]);
+  mcAnswers = opts;
+  mcCorrect = opts.findIndex(o => o.c === correct.c);
+
+  for (let i = 0; i < 4; i++) {
+    const btn = document.getElementById('mc'+i);
+    btn.textContent = opts[i].n;
+    btn.className   = 'mc-btn';
+    btn.disabled    = false;
+  }
+  document.getElementById('btn-next').classList.remove('show');
+  // card stays unflipped
+  document.getElementById('card').classList.remove('flipped');
+}
+
+function pickAnswer(i) {
+  if (mcAnswered || transitioning) return;
+  mcAnswered = true;
+  const isCorrect = i === mcCorrect;
+
+  // Mark buttons
+  for (let j = 0; j < 4; j++) {
+    const btn = document.getElementById('mc'+j);
+    btn.disabled = true;
+    if (j === mcCorrect) btn.classList.add(i === mcCorrect ? 'correct' : 'reveal');
+    else if (j === i) btn.classList.add('wrong');
+  }
+
+  // Flip card to show info
+  document.getElementById('card').classList.add('flipped');
+
+  // Record
+  recordAnswer(deck[idx].c, isCorrect);
+  score.correct += isCorrect ? 1 : 0;
+  score.wrong   += isCorrect ? 0 : 1;
+  score.streak   = isCorrect ? score.streak+1 : 0;
+  updateScore();
+  updateMastery();
+  if (mode === 'timer') {
+    setTimeout(() => { if (!transitioning) advance(); }, 900);
+  } else {
+    document.getElementById('btn-next').classList.add('show');
+  }
+}
+
+// ── Flashcard ─────────────────────────────────────────────────────────────────
+function handleCardClick() {
+  if (mode === 'test' || mode === 'timer') return;
+  if (isReviewing()) { goForward(); return; }
+  if (flipped || transitioning) return;
+  flipped = true;
+  document.getElementById('card').classList.add('flipped');
+  setButtons();
+}
+
+function handleSkip() {
+  if (isReviewing()) { goForward(); return; }
+  advance();
+}
+
+function goBack() {
+  if (idx === 0 || transitioning) return;
+  idx--;
+  flipped = false;
+  render();
+}
+
+function goForward() {
+  if (transitioning) return;
+  transitioning = true;
+  document.getElementById('card').classList.remove('flipped');
+  flipped = false;
+  setTimeout(() => {
+    idx = maxIdx;
+    transitioning = false;
+    render(); setButtons();
+  }, 400);
+}
+
+function handleAnswer(correct) {
+  if (transitioning || isReviewing()) return;
+  recordAnswer(deck[idx].c, correct);
+  score.correct += correct ? 1 : 0;
+  score.wrong   += correct ? 0 : 1;
+  score.streak   = correct ? score.streak+1 : 0;
+  if (mode === 'marathon' && !correct) {
+    marathonWrong.push(deck[idx]);
+  }
+  advance();
+}
+
+// ── Advance ───────────────────────────────────────────────────────────────────
+function advance() {
+  if (transitioning) return;
+  transitioning = true; flipped = false;
+  setButtons();
+  document.getElementById('card').classList.remove('flipped');
+  document.getElementById('btn-next').classList.remove('show');
+  setTimeout(() => {
+    idx++;
+    if (mode === 'marathon') {
+      if (idx >= deck.length) {
+        if (marathonWrong.length > 0) {
+          deck = shuffle(marathonWrong); marathonWrong = []; idx = 0; maxIdx = 0;
+        } else {
+          transitioning = false; showEndScreen(); return;
+        }
+      } else { maxIdx = Math.max(maxIdx, idx); }
+    } else {
+      if (idx >= deck.length) { deck = shuffle(getPool()); idx = 0; maxIdx = 0; }
+      else { maxIdx = Math.max(maxIdx, idx); }
+    }
+    transitioning = false;
+    render(); updateScore();
+    if (mode === 'marathon') updateMarathonLeft();
+  }, 680);
+}
+
+// ── Stats tracking ────────────────────────────────────────────────────────────
+function recordAnswer(code, correct) {
+  if (!globalStats[code]) globalStats[code] = {c:0, w:0};
+  if (correct) globalStats[code].c++; else globalStats[code].w++;
+  saveStats(globalStats);
+
+  records.totalAnswered++;
+  if (correct) records.totalCorrect++;
+  if (score.streak+1 > records.bestStreak && correct) records.bestStreak = score.streak+1;
+  saveRecords(records);
+}
+
+// Mastery: a country is "dominated" if correct > wrong and correct >= 2
+function isDominated(code) {
+  const s = globalStats[code];
+  return s && s.c >= 2 && s.c > s.w;
+}
+function hasAttempted(code) {
+  return globalStats[code] && (globalStats[code].c + globalStats[code].w) > 0;
+}
+
+function updateMastery() {
+  const pool = getPool();
+  const total = pool.length;
+  const dominated = pool.filter(c => isDominated(c.c)).length;
+  const attempted  = pool.filter(c => hasAttempted(c.c) && !isDominated(c.c)).length;
+  document.getElementById('mastery-ok').style.width    = (dominated/total*100) + '%';
+  document.getElementById('mastery-wrong').style.width = ((dominated+attempted)/total*100) + '%';
+  document.getElementById('mastery-count').textContent = `${dominated} / ${total}`;
+}
+
+// ── Update UI ─────────────────────────────────────────────────────────────────
+function updateScore() {
+  document.getElementById('sc-correct').textContent = score.correct;
+  document.getElementById('sc-wrong').textContent   = score.wrong;
+  document.getElementById('sc-streak').textContent  = score.streak;
+  document.getElementById('sc-record').textContent  = records.bestStreak;
+  document.getElementById('streak-num').textContent = score.streak;
+  document.getElementById('streak-badge').classList.toggle('show', score.streak >= 3);
+  updateMastery();
+}
+
+function setButtons() {
+  if (mode === 'flash' || mode === 'marathon') {
+    const rev = isReviewing();
+    document.getElementById('btn-ok').disabled    = !flipped || rev;
+    document.getElementById('btn-no').disabled    = !flipped || rev;
+    document.getElementById('btn-back').disabled  = idx === 0 || transitioning || mode === 'marathon';
+    document.getElementById('btn-skip').textContent = rev ? '→ Nueva' : '→';
+  }
+}
+
+// ── Stats modal ───────────────────────────────────────────────────────────────
+function openStats() {
+  const conts = [
+    {id:'all',label:'🌐 Total',codes:COUNTRIES.map(c=>c.c)},
+    {id:'A',  label:'🌍 África',    codes:COUNTRIES.filter(c=>c.co==='A').map(c=>c.c)},
+    {id:'N',  label:'🌎 N. América',codes:COUNTRIES.filter(c=>c.co==='N').map(c=>c.c)},
+    {id:'S',  label:'🌎 S. América',codes:COUNTRIES.filter(c=>c.co==='S').map(c=>c.c)},
+    {id:'As', label:'🌏 Asia',      codes:COUNTRIES.filter(c=>c.co==='As').map(c=>c.c)},
+    {id:'E',  label:'🏛️ Europa',    codes:COUNTRIES.filter(c=>c.co==='E').map(c=>c.c)},
+    {id:'O',  label:'🏝️ Oceanía',   codes:COUNTRIES.filter(c=>c.co==='O').map(c=>c.c)},
+  ];
+
+  const el = document.getElementById('stats-conts');
+  el.innerHTML = conts.map(({label,codes}) => {
+    const total = codes.length;
+    const dom   = codes.filter(c => isDominated(c)).length;
+    const att   = codes.filter(c => hasAttempted(c) && !isDominated(c)).length;
+    const pOk   = (dom/total*100).toFixed(0);
+    const pW    = ((dom+att)/total*100).toFixed(0);
+    return `<div class="stats-cont">
+      <div class="stats-cont-name"><span>${label}</span><span style="color:#5a5450">${dom}/${total} dominadas</span></div>
+      <div class="stats-bar-track">
+        <div class="stats-bar-w"  style="width:${pW}%"></div>
+        <div class="stats-bar-ok" style="width:${pOk}%"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const rec = document.getElementById('stats-records');
+  const accuracy = records.totalAnswered > 0
+    ? Math.round(records.totalCorrect/records.totalAnswered*100) : 0;
+  rec.innerHTML = `
+    <div class="stat-card"><div class="stat-card-n">${records.bestStreak}</div><div class="stat-card-l">Mejor racha</div></div>
+    <div class="stat-card"><div class="stat-card-n">${records.totalCorrect}</div><div class="stat-card-l">Total aciertos</div></div>
+    <div class="stat-card"><div class="stat-card-n">${accuracy}%</div><div class="stat-card-l">Precisión</div></div>
+  `;
+
+  document.getElementById('stats-overlay').classList.add('show');
+}
+
+function closeStats(e) {
+  if (!e || e.target === document.getElementById('stats-overlay') || e.currentTarget !== document.getElementById('stats-overlay')) {
+    document.getElementById('stats-overlay').classList.remove('show');
+  }
+}
+
+// ── Timer ────────────────────────────────────────────────────────────────────
+let timerInterval = null, timerSeconds = 60;
+function startTimer() {
+  timerSeconds = 60;
+  document.getElementById('timer-display').textContent = timerSeconds;
+  document.getElementById('timer-display').style.color = 'var(--gold)';
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timerSeconds--;
+    document.getElementById('timer-display').textContent = timerSeconds;
+    if (timerSeconds <= 10) document.getElementById('timer-display').style.color = 'var(--red)';
+    if (timerSeconds <= 0) {
+      clearInterval(timerInterval); timerInterval = null;
+      showEndScreen();
+    }
+  }, 1000);
+}
+function showEndScreen() {
+  document.getElementById('end-screen').style.display = 'block';
+  const acc = score.correct + score.wrong > 0
+    ? Math.round(score.correct / (score.correct + score.wrong) * 100) : 0;
+  document.getElementById('end-title').textContent =
+    mode === 'timer' ? '⏱️ ¡Se acabó el tiempo!' : '🏆 ¡Maratón completado!';
+  document.getElementById('end-msg').textContent =
+    mode === 'timer'
+      ? `Respondiste ${score.correct + score.wrong} cartas · ${score.correct} correctas · ${acc}% precisión`
+      : `Dominaste las ${deck.length + marathonWrong.length} cartas · Racha máxima: ${records.bestStreak}`;
+  document.getElementById('mc-options').style.display = 'none';
+  document.getElementById('btn-next').classList.remove('show');
+  document.getElementById('card').style.display = 'none';
+}
+function restartMode() {
+  document.getElementById('card').style.display = '';
+  setMode(mode);
+}
+
+// ── Marathon ──────────────────────────────────────────────────────────────────
+let marathonWrong = [];
+function updateMarathonLeft() {
+  const left = deck.length - idx + marathonWrong.length;
+  document.getElementById('marathon-left').textContent = left;
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+deck = shuffle([...COUNTRIES]);
+setButtons();
+render();
+updateScore();
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
